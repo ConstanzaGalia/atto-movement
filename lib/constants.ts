@@ -1,0 +1,1 @@
+export { WHATSAPP_URL, WHATSAPP_NUMBER, WHATSAPP_DISPLAY } from "@/lib/brand"
