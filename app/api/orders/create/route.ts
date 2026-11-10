@@ -1,300 +1,245 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
 import { getApplicableDiscount } from "@/lib/promotions"
-import { syncVariantAndProductStock } from "@/lib/stock-sync"
-import { getSiteUrl, sendEmail } from "@/lib/email/client"
+import { sendEmail } from "@/lib/email/client"
 import { orderCreatedEmail } from "@/lib/email/templates/order-created"
 import { adminNewOrderEmail } from "@/lib/email/templates/admin-new-order"
 import { upsertCustomerAccount } from "@/lib/customer-accounts"
 import { computeShippingCost, getSiteSettings } from "@/lib/site-settings"
+import { orderAccessUrl } from "@/lib/orders/access"
+import { releaseExpiredOrders } from "@/lib/orders/release-expired"
+import {
+  CART_EMPTY_ERROR,
+  CART_ITEM_UNAVAILABLE_ERROR,
+  CART_QTY_INVALID_ERROR,
+} from "@/lib/brand"
+
+type CartRow = {
+  quantity: number
+  variant_id: string | null
+  variant_size_id: string | null
+  products:
+    | { id: string; name: string; price: number }
+    | { id: string; name: string; price: number }[]
+    | null
+  product_variants: { id: string; color: string; product_id: string } | { id: string; color: string; product_id: string }[] | null
+  product_variant_sizes: { id: string; size: string; variant_id: string } | { id: string; size: string; variant_id: string }[] | null
+}
+
+function one<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null
+  return Array.isArray(value) ? (value[0] ?? null) : value
+}
+
+function mapPlaceOrderError(message: string) {
+  if (message.includes("STOCK_INSUFFICIENT")) {
+    const detail = message.split("STOCK_INSUFFICIENT:")[1]?.trim()
+    return {
+      status: 400,
+      body: {
+        error: "Stock insuficiente",
+        details: detail || "No hay suficiente stock para completar el pedido.",
+      },
+    }
+  }
+  if (message.includes("GIFT_CARD_INVALID")) {
+    return { status: 400, body: { error: "Gift card inválida o inactiva" } }
+  }
+  if (message.includes("GIFT_CARD_EXPIRED")) {
+    return { status: 400, body: { error: "Gift card vencida" } }
+  }
+  if (message.includes("GIFT_CARD_EMPTY")) {
+    return { status: 400, body: { error: "Gift card sin saldo" } }
+  }
+  if (message.includes("CREDIT_DISABLED")) {
+    return { status: 400, body: { error: "Cuenta corriente no habilitada" } }
+  }
+  if (message.includes("CREDIT_LIMIT")) {
+    return { status: 400, body: { error: "Supera el límite de cuenta corriente" } }
+  }
+  if (message.includes("CREDIT_ACCOUNT_MISSING")) {
+    return { status: 400, body: { error: "No se pudo resolver la cuenta del cliente" } }
+  }
+  if (message.includes("EMPTY_CART")) {
+    return { status: 400, body: { error: CART_EMPTY_ERROR } }
+  }
+  if (message.includes("PRICE_ABOVE_CATALOG")) {
+    return { status: 400, body: { error: "El precio del pedido no coincide con el catálogo" } }
+  }
+  return { status: 500, body: { error: "No se pudo crear el pedido" } }
+}
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const {
-    customerName,
-    customerEmail,
-    customerPhone,
-    shippingAddress,
-    notes,
-    sessionId,
-    items,
-    userId,
-    paymentMethod: rawPaymentMethod,
-    giftCardCode,
-    useAccountCredit,
-  } = body
+  const customerName = String(body?.customerName || "").trim()
+  const customerEmail = String(body?.customerEmail || "").trim().toLowerCase()
+  const customerPhone = String(body?.customerPhone || "").trim()
+  const shippingAddress = String(body?.shippingAddress || "").trim()
+  const notes = String(body?.notes || "").trim()
+  const giftCardCode = String(body?.giftCardCode || "").trim()
+  const rawPaymentMethod = String(body?.paymentMethod || "transfer")
+  const useAccountCredit = body?.useAccountCredit === true || rawPaymentMethod === "account_credit"
 
-  if (!customerName || !customerEmail || !shippingAddress || !items || items.length === 0) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+  if (!customerName || !customerEmail || !shippingAddress) {
+    return NextResponse.json({ error: "Faltan nombre, email o dirección" }, { status: 400 })
+  }
+
+  const cookieStore = await cookies()
+  const sessionId = cookieStore.get("cart_session_id")?.value
+  if (!sessionId) {
+    return NextResponse.json({ error: CART_EMPTY_ERROR }, { status: 400 })
+  }
+
+  const sessionClient = await createClient()
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser()
+
+  let userId: string | null = null
+  if (user) {
+    const { data: adminRow } = await sessionClient
+      .from("admin_users")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle()
+    if (!adminRow) userId = user.id
   }
 
   const supabase = await createClient({ role: "service_role" })
-  const settings = await getSiteSettings(supabase)
 
-  for (const item of items) {
-    let availableStock = 0
-    if (item.variantSizeId) {
-      const { data: row } = await supabase
-        .from("product_variant_sizes")
-        .select("stock")
-        .eq("id", item.variantSizeId)
-        .single()
-      availableStock = row?.stock ?? 0
-    } else if (item.variantId) {
-      const { data: row } = await supabase
-        .from("product_variants")
-        .select("stock")
-        .eq("id", item.variantId)
-        .single()
-      availableStock = row?.stock ?? 0
-    } else {
-      const { data: row } = await supabase.from("products").select("stock").eq("id", item.productId).single()
-      availableStock = row?.stock ?? 0
-    }
-    if (item.quantity > availableStock) {
-      const name = [item.productName, item.variantColor, item.variantSize].filter(Boolean).join(" - ")
-      return NextResponse.json(
-        {
-          error: "Stock insuficiente",
-          details: `No hay suficiente stock para "${name}". Disponible: ${availableStock}, solicitado: ${item.quantity}.`,
-        },
-        { status: 400 }
-      )
-    }
+  try {
+    await releaseExpiredOrders(supabase)
+  } catch (err) {
+    console.error("[orders/create] release expired:", err)
   }
 
+  const { data: cartRows, error: cartError } = await supabase
+    .from("cart_items")
+    .select(
+      "quantity, variant_id, variant_size_id, products(id, name, price), product_variants(id, color, product_id), product_variant_sizes(id, size, variant_id)"
+    )
+    .eq("session_id", sessionId)
+
+  if (cartError) {
+    return NextResponse.json({ error: cartError.message }, { status: 500 })
+  }
+
+  const cartItems = (cartRows || []) as CartRow[]
+  if (cartItems.length === 0) {
+    return NextResponse.json({ error: CART_EMPTY_ERROR }, { status: 400 })
+  }
+
+  const settings = await getSiteSettings(supabase)
+  const items: {
+    product_id: string
+    product_name: string
+    product_price: number
+    quantity: number
+    variant_id: string | null
+    variant_color: string | null
+    variant_size_id: string | null
+    variant_size: string | null
+  }[] = []
+
   let subtotal = 0
-  const itemsWithPrice: { item: (typeof items)[0]; finalPrice: number }[] = []
-  for (const item of items) {
-    const basePrice = Number(item.productPrice)
-    const { discountedPrice } = await getApplicableDiscount(supabase, item.productId, basePrice)
-    const line = Math.round(discountedPrice * item.quantity * 100) / 100
-    subtotal += line
-    itemsWithPrice.push({ item, finalPrice: discountedPrice })
+  for (const row of cartItems) {
+    const product = one(row.products)
+    const variant = one(row.product_variants)
+    const size = one(row.product_variant_sizes)
+    if (!product) {
+      return NextResponse.json({ error: CART_ITEM_UNAVAILABLE_ERROR }, { status: 400 })
+    }
+
+    const quantity = Number(row.quantity)
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return NextResponse.json({ error: CART_QTY_INVALID_ERROR }, { status: 400 })
+    }
+
+    const catalogPrice = Number(product.price)
+    const { discountedPrice } = await getApplicableDiscount(supabase, product.id, catalogPrice)
+    const finalPrice = Math.round(discountedPrice * 100) / 100
+    let productName = product.name
+    if (variant?.color) productName += ` - ${variant.color}`
+    if (size?.size) productName += ` - Talle ${size.size}`
+
+    items.push({
+      product_id: product.id,
+      product_name: productName,
+      product_price: finalPrice,
+      quantity,
+      variant_id: row.variant_id,
+      variant_color: variant?.color || null,
+      variant_size_id: row.variant_size_id,
+      variant_size: size?.size || null,
+    })
+    subtotal += Math.round(finalPrice * quantity * 100) / 100
   }
   subtotal = Math.round(subtotal * 100) / 100
 
   const shippingCost = computeShippingCost(subtotal, settings)
-  let orderTotal = Math.round((subtotal + shippingCost) * 100) / 100
-
-  let giftCardAmount = 0
-  let giftCardId: string | null = null
-  if (giftCardCode && String(giftCardCode).trim()) {
-    const code = String(giftCardCode).trim().toUpperCase()
-    const { data: card } = await supabase
-      .from("gift_cards")
-      .select("*")
-      .eq("code", code)
-      .eq("status", "active")
-      .maybeSingle()
-
-    if (!card) {
-      return NextResponse.json({ error: "Gift card inválida o inactiva" }, { status: 400 })
-    }
-    if (card.expires_at && new Date(card.expires_at) < new Date()) {
-      return NextResponse.json({ error: "Gift card vencida" }, { status: 400 })
-    }
-    const balance = Number(card.balance)
-    if (balance <= 0) {
-      return NextResponse.json({ error: "Gift card sin saldo" }, { status: 400 })
-    }
-    giftCardAmount = Math.min(balance, orderTotal)
-    giftCardId = card.id
-    orderTotal = Math.round((orderTotal - giftCardAmount) * 100) / 100
-  }
-
-  let paymentMethod = (rawPaymentMethod as string) || "transfer"
+  let paymentMethod = rawPaymentMethod
   if (!["transfer", "mercadopago", "account_credit"].includes(paymentMethod)) {
     paymentMethod = "transfer"
   }
-
-  let paymentStatus = "awaiting_transfer"
-  if (paymentMethod === "mercadopago") paymentStatus = "unpaid"
-  if (paymentMethod === "account_credit") paymentStatus = "on_account"
-  if (orderTotal === 0 && giftCardAmount > 0) {
-    paymentMethod = "gift_card"
-    paymentStatus = "paid"
-  } else if (giftCardAmount > 0 && paymentMethod === "transfer") {
-    paymentMethod = "mixed"
-  }
+  if (useAccountCredit) paymentMethod = "account_credit"
 
   const customerAccountId = await upsertCustomerAccount(supabase, {
     email: customerEmail,
     fullName: customerName,
-    phone: customerPhone,
+    phone: customerPhone || null,
     shippingAddress,
-    userId: userId || null,
+    userId,
   })
 
-  if (useAccountCredit || paymentMethod === "account_credit") {
-    if (!customerAccountId) {
-      return NextResponse.json({ error: "No se pudo resolver la cuenta del cliente" }, { status: 400 })
-    }
-    const { data: credit } = await supabase
-      .from("credit_accounts")
-      .select("*")
-      .eq("customer_account_id", customerAccountId)
-      .eq("enabled", true)
-      .maybeSingle()
-
-    if (!credit) {
-      return NextResponse.json({ error: "Cuenta corriente no habilitada" }, { status: 400 })
-    }
-    const nextBalance = Number(credit.balance) + orderTotal
-    if (nextBalance > Number(credit.credit_limit)) {
-      return NextResponse.json(
-        {
-          error: "Supera el límite de cuenta corriente",
-          details: `Saldo+pedido ${nextBalance} > límite ${credit.credit_limit}`,
-        },
-        { status: 400 }
-      )
-    }
-    paymentMethod = giftCardAmount > 0 ? "mixed" : "account_credit"
-    paymentStatus = "on_account"
-  }
-
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
+  const { data: placed, error: placeError } = await supabase.rpc("place_order", {
+    payload: {
       customer_name: customerName,
       customer_email: customerEmail,
       customer_phone: customerPhone,
       shipping_address: shippingAddress,
       notes,
-      total_amount: Math.round((subtotal + shippingCost) * 100) / 100,
-      status: "pending",
-      user_id: userId || null,
-      payment_status: paymentStatus,
-      payment_method: paymentMethod,
-      paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
-      shipping_cost: shippingCost,
-      gift_card_amount: giftCardAmount,
+      user_id: userId,
       customer_account_id: customerAccountId,
-    })
-    .select()
-    .single()
-
-  if (orderError) {
-    return NextResponse.json({ error: orderError.message }, { status: 500 })
-  }
-
-  if (giftCardId && giftCardAmount > 0) {
-    const { data: card } = await supabase.from("gift_cards").select("balance").eq("id", giftCardId).single()
-    const newBalance = Math.round((Number(card?.balance || 0) - giftCardAmount) * 100) / 100
-    await supabase
-      .from("gift_cards")
-      .update({
-        balance: newBalance,
-        status: newBalance <= 0 ? "depleted" : "active",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", giftCardId)
-    await supabase.from("gift_card_redemptions").insert({
-      gift_card_id: giftCardId,
-      order_id: order.id,
-      amount: giftCardAmount,
-    })
-  }
-
-  if (paymentStatus === "on_account" && customerAccountId && orderTotal > 0) {
-    const { data: credit } = await supabase
-      .from("credit_accounts")
-      .select("*")
-      .eq("customer_account_id", customerAccountId)
-      .single()
-    if (credit) {
-      const newBalance = Math.round((Number(credit.balance) + orderTotal) * 100) / 100
-      await supabase
-        .from("credit_accounts")
-        .update({ balance: newBalance, updated_at: new Date().toISOString() })
-        .eq("id", credit.id)
-      await supabase.from("credit_movements").insert({
-        credit_account_id: credit.id,
-        type: "charge",
-        amount: orderTotal,
-        order_id: order.id,
-        notes: "Cargo por pedido",
-      })
-    }
-  }
-
-  for (const { item, finalPrice } of itemsWithPrice) {
-    let productName = item.productName
-    if (item.variantColor) productName += ` - ${item.variantColor}`
-    if (item.variantSize) productName += ` - Talle ${item.variantSize}`
-    const lineSubtotal = Math.round(finalPrice * item.quantity * 100) / 100
-
-    await supabase.from("order_items").insert({
-      order_id: order.id,
-      product_id: item.productId,
-      product_name: productName,
-      product_price: finalPrice,
-      quantity: item.quantity,
-      subtotal: lineSubtotal,
-      variant_id: item.variantId || null,
-      variant_color: item.variantColor || null,
-      variant_size_id: item.variantSizeId || null,
-      variant_size: item.variantSize || null,
-    })
-
-    if (item.variantSizeId) {
-      const { data: variantSize } = await supabase
-        .from("product_variant_sizes")
-        .select("stock, variant_id")
-        .eq("id", item.variantSizeId)
-        .single()
-      if (variantSize) {
-        await supabase
-          .from("product_variant_sizes")
-          .update({ stock: variantSize.stock - item.quantity })
-          .eq("id", item.variantSizeId)
-        await syncVariantAndProductStock(supabase, variantSize.variant_id, item.productId)
-      }
-    } else if (item.variantId) {
-      const { data: variant } = await supabase
-        .from("product_variants")
-        .select("stock")
-        .eq("id", item.variantId)
-        .single()
-      if (variant) {
-        await supabase
-          .from("product_variants")
-          .update({ stock: variant.stock - item.quantity })
-          .eq("id", item.variantId)
-      }
-    } else {
-      const { data: product } = await supabase.from("products").select("stock").eq("id", item.productId).single()
-      if (product) {
-        await supabase
-          .from("products")
-          .update({ stock: product.stock - item.quantity })
-          .eq("id", item.productId)
-      }
-    }
-  }
-
-  if (sessionId) {
-    await supabase.from("cart_items").delete().eq("session_id", sessionId)
-  }
-
-  const emailItems = itemsWithPrice.map(({ item, finalPrice }) => {
-    let name = item.productName as string
-    if (item.variantColor) name += ` - ${item.variantColor}`
-    if (item.variantSize) name += ` - Talle ${item.variantSize}`
-    return {
-      name,
-      quantity: item.quantity as number,
-      subtotal: Math.round(finalPrice * item.quantity * 100) / 100,
-    }
+      payment_method: paymentMethod,
+      shipping_cost: shippingCost,
+      gift_card_code: giftCardCode || null,
+      use_account_credit: useAccountCredit,
+      hold_hours: settings.unpaid_hold_hours,
+      items,
+    },
   })
 
-  const payable = Math.max(0, orderTotal)
-  const ordersUrl = userId ? `${getSiteUrl()}/mi-cuenta/pedidos` : null
+  if (placeError || !placed) {
+    const mapped = mapPlaceOrderError(`${placeError?.message || ""} ${String(placeError?.details || "")}`)
+    return NextResponse.json(mapped.body, { status: mapped.status })
+  }
+
+  const result = placed as {
+    order_id: string
+    view_token: string
+    payment_method: string
+    payment_status: string
+    payable_amount: number
+    shipping_cost: number
+    gift_card_amount: number
+    subtotal: number
+    total_amount: number
+  }
+
+  await supabase.from("cart_items").delete().eq("session_id", sessionId)
+
+  const emailItems = items.map((item) => ({
+    name: item.product_name,
+    quantity: item.quantity,
+    subtotal: Math.round(item.product_price * item.quantity * 100) / 100,
+  }))
+
+  const ordersUrl = orderAccessUrl(result.order_id, result.view_token)
   const { subject, html } = orderCreatedEmail({
     customerName,
-    orderId: order.id,
-    totalAmount: Math.round((subtotal + shippingCost) * 100) / 100,
+    orderId: result.order_id,
+    totalAmount: Number(result.total_amount),
     items: emailItems,
     ordersUrl,
   })
@@ -303,24 +248,25 @@ export async function POST(request: Request) {
   const adminEmail = settings.admin_notify_email || process.env.ADMIN_NOTIFY_EMAIL
   if (adminEmail) {
     const adminMail = adminNewOrderEmail({
-      orderId: order.id,
+      orderId: result.order_id,
       customerName,
       customerEmail,
       customerPhone,
-      totalAmount: Math.round((subtotal + shippingCost) * 100) / 100,
-      paymentMethod,
-      paymentStatus,
+      totalAmount: Number(result.total_amount),
+      paymentMethod: result.payment_method,
+      paymentStatus: result.payment_status,
     })
     await sendEmail({ to: adminEmail, subject: adminMail.subject, html: adminMail.html })
   }
 
   return NextResponse.json({
     success: true,
-    orderId: order.id,
-    paymentMethod,
-    paymentStatus,
-    payableAmount: payable,
-    shippingCost,
-    giftCardAmount,
+    orderId: result.order_id,
+    viewToken: result.view_token,
+    paymentMethod: result.payment_method,
+    paymentStatus: result.payment_status,
+    payableAmount: Number(result.payable_amount),
+    shippingCost: Number(result.shipping_cost),
+    giftCardAmount: Number(result.gift_card_amount),
   })
 }

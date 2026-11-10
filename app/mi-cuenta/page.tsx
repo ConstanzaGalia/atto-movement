@@ -4,6 +4,7 @@ import Link from "next/link"
 import { AttoEyebrow } from "@/components/atto/atto-eyebrow"
 import { SpecCell } from "@/components/atto/spec-cell"
 import { AdminStatusBadge } from "@/components/admin/ui"
+import { SHIPPING_LABEL } from "@/lib/brand"
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pendiente",
@@ -72,7 +73,7 @@ export default async function MiCuentaPage() {
             Hola, {firstName}
           </h1>
           <p className="font-technical-data text-atto-secondary max-w-xl">
-            Perfil, pedidos y seguimiento de envíos Atto.
+            Perfil, pedidos y seguimiento de despachos Atto.
           </p>
         </div>
 
@@ -104,7 +105,7 @@ export default async function MiCuentaPage() {
                 <dd className="text-right">{customer?.phone || "—"}</dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-atto-secondary uppercase text-[10px] tracking-wider">Envío</dt>
+                <dt className="text-atto-secondary uppercase text-[10px] tracking-wider">{SHIPPING_LABEL}</dt>
                 <dd className="text-right normal-case max-w-[60%]">
                   {customer?.shipping_address || "Sin dirección guardada"}
                 </dd>

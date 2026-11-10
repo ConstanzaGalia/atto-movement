@@ -6,6 +6,12 @@ import { ProductImageWrapper } from "./product-image-wrapper"
 import { SpecCell } from "@/components/atto/spec-cell"
 import { usePromotions } from "@/contexts/promotions-context"
 import { FlaskConical } from "lucide-react"
+import {
+  STOCK_IN_BASE,
+  STOCK_OUT_OF_BASE,
+  TEST_ALTITUDE,
+  TEST_ELEVATION_GAIN,
+} from "@/lib/brand"
 
 type Variant = {
   id: string
@@ -96,8 +102,8 @@ export function ProductDetailsWrapper({
             </div>
             <span className="font-technical-micro text-atto-secondary">SISTEMA ATTO-PERF</span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3">
-            <SpecCell label="STOCK TOTAL" value={`${totalStock} U`} hint="DISPONIBLE" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-3">
+            <SpecCell label={STOCK_IN_BASE} value={`${totalStock} U`} hint="DISPONIBLE" />
             <SpecCell
               label="COLORES"
               value={String(variants.length || 1).padStart(2, "0")}
@@ -106,9 +112,11 @@ export function ProductDetailsWrapper({
             <SpecCell label="CATEGORÍA" value={category?.name || "GEAR"} hint="LÍNEA" />
             <SpecCell
               label="ESTADO"
-              value={hasStock ? "READY" : "SOLD OUT"}
+              value={hasStock ? "READY" : "OUT"}
               hint="RUN MATRIX"
             />
+            <SpecCell label="DESNIVEL" value={TEST_ELEVATION_GAIN} hint="PRUEBA YUNGAS" />
+            <SpecCell label="ALTITUD" value={TEST_ALTITUDE} hint="SAN JAVIER" />
           </div>
         </div>
       </div>
@@ -166,10 +174,10 @@ export function ProductDetailsWrapper({
           <p className="font-technical-micro mb-6">
             {hasStock ? (
               <span className="text-black font-semibold">
-                {totalStock} UNIDADES // MATCH READY
+                {totalStock} {STOCK_IN_BASE} // MATCH READY
               </span>
             ) : (
-              <span className="text-red-600 font-semibold">SIN STOCK</span>
+              <span className="text-red-600 font-semibold">{STOCK_OUT_OF_BASE}</span>
             )}
           </p>
 

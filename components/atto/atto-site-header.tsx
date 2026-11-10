@@ -23,7 +23,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { usePromotions } from "@/contexts/promotions-context"
 import { AttoLogo } from "@/components/atto/atto-logo"
-import { MARQUEE_DEFAULT, NAV_LINKS } from "@/lib/brand"
+import { CONFIRM_EXIT, KIT_LABEL_SHORT, MARQUEE_DEFAULT, NAV_LINKS } from "@/lib/brand"
 
 export function AttoSiteHeader() {
   const [cartCount, setCartCount] = useState(0)
@@ -67,12 +67,17 @@ export function AttoSiteHeader() {
 
         if (user) {
           setIsLoggedIn(true)
-          const isAdminUser = user.user_metadata?.is_admin === true
+          const { data: adminRow } = await supabase
+            .from("admin_users")
+            .select("id, full_name")
+            .eq("id", user.id)
+            .maybeSingle()
+          const isAdminUser = !!adminRow
           setIsAdmin(isAdminUser)
 
           if (isAdminUser) {
             setAdminDisplayName(
-              user.user_metadata?.full_name || user.email?.split("@")[0] || user.email || "Admin"
+              adminRow?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || user.email || "Admin"
             )
             setCustomerName(null)
           } else {
@@ -291,7 +296,7 @@ export function AttoSiteHeader() {
             className="inline-flex items-center gap-2 bg-black text-white font-label-caps px-3 sm:px-4 py-2 hover:bg-neutral-800 transition-colors"
           >
             <ShoppingBag className="h-4 w-4" />
-            <span className="hidden sm:inline">CARRITO</span>
+            <span className="hidden sm:inline">{KIT_LABEL_SHORT}</span>
             <span className="bg-white text-black font-technical-micro px-1.5 py-0.5 font-bold">
               [{cartLabel}]
             </span>
@@ -301,7 +306,7 @@ export function AttoSiteHeader() {
             href="/checkout"
             className="hidden sm:inline-flex items-center gap-1 border border-black px-3 py-2 font-label-caps text-black hover:bg-black hover:text-white transition-colors"
           >
-            CHECKOUT
+            {CONFIRM_EXIT}
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
 

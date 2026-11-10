@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { randomUUID } from "crypto"
+import { requireAdmin } from "@/lib/auth/admin"
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
 
 export async function POST(request: NextRequest) {
   try {
+    const { response } = await requireAdmin()
+    if (response) return response
+
     const formData = await request.formData()
     const files = formData.getAll("file") as File[]
     const singleFile = formData.get("file") as File | null

@@ -9,7 +9,6 @@ import { PasswordInput } from "@/components/password-input"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import Link from "next/link"
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("")
@@ -84,12 +83,6 @@ export default function AdminLoginPage() {
           >
             {isPending ? "Autenticando…" : "Ingresar"}
           </button>
-          <p className="text-center font-technical-data text-atto-secondary">
-            ¿Primera vez?{" "}
-            <Link href="/auth/admin-register" className="text-black border-b border-black">
-              Crear operador
-            </Link>
-          </p>
         </form>
       </div>
     </div>

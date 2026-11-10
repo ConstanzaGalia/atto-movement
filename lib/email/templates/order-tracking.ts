@@ -14,7 +14,7 @@ export function orderTrackingEmail(params: {
     <p style="margin:0 0 16px;font-size:14px;"><strong>Tracking:</strong> ${escapeHtml(params.trackingNumber)}</p>
   `
   return {
-    subject: `Atto // Envío #${ref}`,
+    subject: `Atto // Despacho #${ref}`,
     html: emailLayout(`Tracking #${ref}`, body),
   }
 }

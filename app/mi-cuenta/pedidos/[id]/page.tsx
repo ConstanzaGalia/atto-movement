@@ -4,6 +4,7 @@ import Link from "next/link"
 import { AttoEyebrow } from "@/components/atto/atto-eyebrow"
 import { SpecCell } from "@/components/atto/spec-cell"
 import { AdminStatusBadge } from "@/components/admin/ui"
+import { SHIPPING_LABEL } from "@/lib/brand"
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pendiente",
@@ -101,7 +102,7 @@ export default async function PedidoDetallePage({ params }: { params: Promise<{ 
           />
           <SpecCell label="Total" value={`$ ${Number(order.total_amount).toLocaleString("es-AR")}`} />
           <SpecCell
-            label="Envío"
+            label={SHIPPING_LABEL}
             value={
               order.shipping_cost != null
                 ? Number(order.shipping_cost) === 0
@@ -114,7 +115,7 @@ export default async function PedidoDetallePage({ params }: { params: Promise<{ 
         </div>
 
         <section className="border border-outline-variant bg-white p-5 space-y-3">
-          <p className="font-technical-micro text-outline uppercase">Envío</p>
+          <p className="font-technical-micro text-outline uppercase">{SHIPPING_LABEL}</p>
           <dl className="space-y-2 font-technical-data">
             <div className="flex justify-between gap-4 border-b border-outline-variant/50 pb-2">
               <dt className="text-atto-secondary uppercase text-[10px]">Nombre</dt>

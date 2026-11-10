@@ -11,8 +11,8 @@ export default async function AdminPage() {
     redirect("/auth/admin-login")
   }
 
-  // Check if user is admin
-  if (!data.user.user_metadata?.is_admin) {
+  const { data: adminRow } = await supabase.from("admin_users").select("id").eq("id", data.user.id).maybeSingle()
+  if (!adminRow) {
     redirect("/")
   }
 

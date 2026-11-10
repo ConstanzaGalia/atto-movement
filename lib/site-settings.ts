@@ -6,6 +6,7 @@ export type SiteSettingsMap = {
   free_shipping_threshold: number
   admin_notify_email: string
   transfer_instructions: string
+  unpaid_hold_hours: number
 }
 
 const DEFAULTS: SiteSettingsMap = {
@@ -14,6 +15,7 @@ const DEFAULTS: SiteSettingsMap = {
   admin_notify_email: "",
   transfer_instructions:
     "Te enviamos los datos de transferencia por WhatsApp al confirmar el pedido.",
+  unpaid_hold_hours: 48,
 }
 
 export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSettingsMap> {
@@ -27,6 +29,10 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
     if (row.key === "admin_notify_email") map.admin_notify_email = row.value || ""
     if (row.key === "transfer_instructions")
       map.transfer_instructions = row.value || DEFAULTS.transfer_instructions
+    if (row.key === "unpaid_hold_hours") {
+      const hours = Number(row.value)
+      map.unpaid_hold_hours = hours >= 1 ? Math.min(hours, 720) : DEFAULTS.unpaid_hold_hours
+    }
   }
   return map
 }

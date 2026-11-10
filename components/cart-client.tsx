@@ -8,7 +8,20 @@ import Link from "next/link"
 import { PaymentWhatsAppNotice } from "@/components/payment-whatsapp-notice"
 import { usePromotions } from "@/contexts/promotions-context"
 import { AttoTelemetryBar } from "@/components/atto/atto-telemetry-bar"
-import { DEFAULT_SHIPPING_BASE_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/brand"
+import {
+  CONFIRM_EXIT_CTA,
+  CONTINUE_ON_TRAIL,
+  DEFAULT_SHIPPING_BASE_COST,
+  EXIT_BRIEFING,
+  FREE_SHIPPING_REACHED,
+  FREE_SHIPPING_THRESHOLD,
+  KIT_EMPTY_SUBTITLE,
+  KIT_EMPTY_TITLE,
+  KIT_LABEL,
+  KIT_TELEMETRY,
+  SHIPPING_LABEL,
+  freeShippingRemaining,
+} from "@/lib/brand"
 
 type CartItem = {
   id: string
@@ -100,16 +113,16 @@ export function CartClient({ initialItems }: { initialItems: CartItem[] }) {
   if (items.length === 0) {
     return (
       <div className="text-center py-16 border border-surface-container-high bg-surface-container-lowest px-6">
-        <p className="font-headline-sm uppercase mb-2">Bolsa vacía</p>
+        <p className="font-headline-sm uppercase mb-2">{KIT_EMPTY_TITLE}</p>
         <p className="font-technical-data text-atto-secondary mb-6 uppercase">
-          No hay ítems en el registro de salida
+          {KIT_EMPTY_SUBTITLE}
         </p>
         <Link
           href="/tienda"
           className="inline-flex items-center gap-2 bg-black text-white font-label-caps px-6 py-3 hover:bg-neutral-800"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          CONTINUAR EXPLORANDO
+          {CONTINUE_ON_TRAIL}
         </Link>
       </div>
     )
@@ -118,7 +131,7 @@ export function CartClient({ initialItems }: { initialItems: CartItem[] }) {
   return (
     <>
       <AttoTelemetryBar
-        left={`CART TERMINAL // SESIÓN ACTIVA: #AT-${items[0]?.id.slice(0, 4).toUpperCase()}-TX`}
+        left={`${KIT_TELEMETRY} // SESIÓN ACTIVA: #AT-${items[0]?.id.slice(0, 4).toUpperCase()}-TX`}
         right={
           <>
             <span className="hidden sm:inline">ORIGEN: TUCUMÁN [AR]</span>
@@ -135,7 +148,7 @@ export function CartClient({ initialItems }: { initialItems: CartItem[] }) {
               <div className="flex items-center gap-2 font-technical-data uppercase text-atto-secondary mb-2">
                 <span>REGISTRO DE SALIDA</span>
                 <span>//</span>
-                <span className="text-black font-bold">BOLSA DE DESPACHO</span>
+                <span className="text-black font-bold">{KIT_LABEL}</span>
               </div>
               <h1 className="font-headline-lg uppercase tracking-tighter text-black">
                 TUS SELECCIONES{" "}
@@ -149,7 +162,7 @@ export function CartClient({ initialItems }: { initialItems: CartItem[] }) {
               className="inline-flex items-center gap-2 font-label-caps px-4 py-2 border border-black text-black hover:bg-surface-container-low transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              CONTINUAR EXPLORANDO
+              {CONTINUE_ON_TRAIL}
             </Link>
           </div>
 
@@ -159,8 +172,10 @@ export function CartClient({ initialItems }: { initialItems: CartItem[] }) {
                 <Truck className="h-4 w-4" />
                 <span>
                   {freeShippingReached
-                    ? "¡TENÉS ENVÍO GRATIS ASEGURADO A TODO EL PAÍS!"
-                    : `FALTAN $ ${(FREE_SHIPPING_THRESHOLD - total).toLocaleString("es-AR")} PARA ENVÍO GRATIS`}
+                    ? FREE_SHIPPING_REACHED
+                    : freeShippingRemaining(
+                        (FREE_SHIPPING_THRESHOLD - total).toLocaleString("es-AR")
+                      )}
                 </span>
               </div>
               <span className="font-technical-micro text-atto-secondary">
@@ -302,7 +317,7 @@ export function CartClient({ initialItems }: { initialItems: CartItem[] }) {
           <aside className="lg:col-span-5 xl:col-span-4">
             <div className="bg-surface-container-lowest border border-surface-container-high p-6 sticky top-28 space-y-5">
               <h2 className="font-headline-sm uppercase text-black font-bold tracking-tight border-b border-surface-container-high pb-4">
-                RESUMEN DE ORDEN
+                {EXIT_BRIEFING}
               </h2>
               <div className="space-y-3 font-technical-data">
                 <div className="flex justify-between uppercase">
@@ -310,7 +325,7 @@ export function CartClient({ initialItems }: { initialItems: CartItem[] }) {
                   <span className="font-bold">$ {total.toLocaleString("es-AR")} ARS</span>
                 </div>
                 <div className="flex justify-between uppercase">
-                  <span className="text-atto-secondary">Envío</span>
+                  <span className="text-atto-secondary">{SHIPPING_LABEL}</span>
                   <span className="font-bold">
                     {freeShippingReached
                       ? "GRATIS"
@@ -335,13 +350,13 @@ export function CartClient({ initialItems }: { initialItems: CartItem[] }) {
                 className="w-full inline-flex items-center justify-center gap-2 bg-black text-white font-label-caps py-3.5 hover:bg-neutral-800 transition-colors"
               >
                 <Lock className="h-4 w-4" />
-                INICIAR CHECKOUT SEGURO
+                {CONFIRM_EXIT_CTA}
               </Link>
               <Link
                 href="/tienda"
                 className="w-full inline-flex items-center justify-center border border-black font-label-caps py-3 hover:bg-surface-container-low transition-colors"
               >
-                CONTINUAR EXPLORANDO
+                {CONTINUE_ON_TRAIL}
               </Link>
             </div>
           </aside>

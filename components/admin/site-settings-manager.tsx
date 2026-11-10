@@ -13,6 +13,7 @@ export function SiteSettingsManager() {
   const [freeThreshold, setFreeThreshold] = useState("50000")
   const [adminEmail, setAdminEmail] = useState("")
   const [transferInstructions, setTransferInstructions] = useState("")
+  const [holdHours, setHoldHours] = useState("48")
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -24,6 +25,7 @@ export function SiteSettingsManager() {
         if (row.key === "free_shipping_threshold") setFreeThreshold(row.value)
         if (row.key === "admin_notify_email") setAdminEmail(row.value)
         if (row.key === "transfer_instructions") setTransferInstructions(row.value)
+        if (row.key === "unpaid_hold_hours") setHoldHours(row.value)
       }
     }
     load()
@@ -37,6 +39,7 @@ export function SiteSettingsManager() {
       { key: "free_shipping_threshold", value: String(Number(freeThreshold) || 0) },
       { key: "admin_notify_email", value: adminEmail.trim() },
       { key: "transfer_instructions", value: transferInstructions },
+      { key: "unpaid_hold_hours", value: String(Math.min(720, Math.max(1, Number(holdHours) || 48))) },
     ]
     for (const row of rows) {
       const { error } = await supabase.from("site_settings").upsert({
@@ -69,6 +72,12 @@ export function SiteSettingsManager() {
           <div>
             <label className="font-technical-micro text-outline uppercase block mb-1">Umbral envío gratis</label>
             <Input value={freeThreshold} onChange={(e) => setFreeThreshold(e.target.value)} className="rounded-none" />
+          </div>
+          <div>
+            <label className="font-technical-micro text-outline uppercase block mb-1">
+              Horas de reserva sin pago
+            </label>
+            <Input value={holdHours} onChange={(e) => setHoldHours(e.target.value)} className="rounded-none" />
           </div>
           <div className="md:col-span-2">
             <label className="font-technical-micro text-outline uppercase block mb-1">Email aviso pedidos</label>

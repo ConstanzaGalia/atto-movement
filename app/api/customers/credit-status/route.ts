@@ -7,7 +7,12 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user || user.user_metadata?.is_admin) {
+  if (!user) {
+    return NextResponse.json({ enabled: false })
+  }
+
+  const { data: adminRow } = await supabase.from("admin_users").select("id").eq("id", user.id).maybeSingle()
+  if (adminRow) {
     return NextResponse.json({ enabled: false })
   }
 

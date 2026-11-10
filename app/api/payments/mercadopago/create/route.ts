@@ -25,15 +25,16 @@ export async function POST(request: Request) {
   }
 
   const site = getSiteUrl()
+  const tokenQuery = order.view_token ? `&t=${encodeURIComponent(order.view_token)}` : ""
   try {
     const pref = await createMercadoPagoPreference({
       orderId: order.id,
       title: `Atto pedido ${order.id.slice(0, 8)}`,
       amount,
       payerEmail: order.customer_email,
-      successUrl: `${site}/pedido-confirmado?orderId=${order.id}&mp=success`,
-      failureUrl: `${site}/pedido-confirmado?orderId=${order.id}&mp=failure`,
-      pendingUrl: `${site}/pedido-confirmado?orderId=${order.id}&mp=pending`,
+      successUrl: `${site}/pedido-confirmado?orderId=${order.id}${tokenQuery}&mp=success`,
+      failureUrl: `${site}/pedido-confirmado?orderId=${order.id}${tokenQuery}&mp=failure`,
+      pendingUrl: `${site}/pedido-confirmado?orderId=${order.id}${tokenQuery}&mp=pending`,
       notificationUrl: `${site}/api/payments/mercadopago/webhook`,
     })
 

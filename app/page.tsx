@@ -4,7 +4,7 @@ import { ArrowRight, CreditCard, MessageCircle, Truck } from "lucide-react"
 import { ProductCard } from "@/components/product-card"
 import { HeroSection } from "@/components/hero-section"
 import { computeStockFromSizes, isProductSetupComplete } from "@/lib/product-setup"
-import { SITE_TAGLINE, WHATSAPP_URL } from "@/lib/brand"
+import { FEATURED_GEAR, FEATURED_GEAR_EMPTY, SITE_TAGLINE, WHATSAPP_URL } from "@/lib/brand"
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -111,7 +111,7 @@ export default async function HomePage() {
               <p className="font-technical-data text-atto-secondary uppercase mb-2">
                 BESTSELLERS // SERIE PRIMAVERA-VERANO
               </p>
-              <h2 className="font-headline-lg uppercase text-black">Productos Destacados</h2>
+              <h2 className="font-headline-lg uppercase text-black">{FEATURED_GEAR}</h2>
             </div>
             <Link
               href="/tienda"
@@ -136,7 +136,7 @@ export default async function HomePage() {
           ) : (
             <div className="text-center py-16 border border-surface-container-high bg-surface-container-lowest">
               <p className="font-technical-data text-atto-secondary mb-6 uppercase">
-                No hay productos destacados en este momento.
+                {FEATURED_GEAR_EMPTY}
               </p>
               <Link
                 href="/tienda"
@@ -177,7 +177,7 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             {[
-              { icon: Truck, title: "ENVÍOS A TODO EL PAÍS", desc: "Despacho express 24–48h" },
+              { icon: Truck, title: "DESPACHO A TODO EL PAÍS", desc: "Express 24–48h a cumbre" },
               { icon: CreditCard, title: "PAGO POR TRANSFERENCIA", desc: "Coordinamos por WhatsApp" },
               { icon: MessageCircle, title: "CANAL WHATSAPP DIRECTO", desc: "Coordinación real" },
             ].map(({ icon: Icon, title, desc }) => (

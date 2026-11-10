@@ -50,7 +50,7 @@ export default function CustomerRegisterPage() {
     <AttoAuthShell
       eyebrow="ACCOUNT // JOIN"
       title="Crear cuenta"
-      description="Seguí tus pedidos y guardá tus datos de envío."
+      description="Seguí tus pedidos y guardá tus datos de despacho."
     >
       <form onSubmit={handleRegister} className="space-y-4">
         {error && (

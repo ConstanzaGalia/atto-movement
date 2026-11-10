@@ -1,14 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/auth/admin"
 
 export async function POST(request: Request) {
-  const supabaseAuth = await createClient()
-  const {
-    data: { user },
-  } = await supabaseAuth.auth.getUser()
-  if (!user?.user_metadata?.is_admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const { response } = await requireAdmin()
+  if (response) return response
 
   const { customerAccountId, creditLimit, enabled } = await request.json()
   if (!customerAccountId) {

@@ -86,7 +86,7 @@ function CustomerLoginForm() {
     <AttoAuthShell
       eyebrow="ACCOUNT // ACCESS"
       title="Iniciar sesión"
-      description="Pedidos, perfil y seguimiento de envíos."
+      description="Pedidos, perfil y seguimiento de despachos."
     >
       <form onSubmit={handleLogin} className="space-y-4">
         {verified && (

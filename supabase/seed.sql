@@ -58,6 +58,14 @@ INSERT INTO auth.identities (
 )
 ON CONFLICT (provider_id, provider) DO NOTHING;
 
+INSERT INTO public.admin_users (id, email, full_name)
+VALUES (
+  'a0000000-0000-4000-8000-000000000001',
+  'coco@atto.com',
+  'Coco Atto'
+)
+ON CONFLICT (id) DO NOTHING;
+
 -- Limpiar catálogo previo (idempotente)
 DELETE FROM order_items;
 DELETE FROM orders;

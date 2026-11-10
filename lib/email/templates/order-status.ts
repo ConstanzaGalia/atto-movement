@@ -19,11 +19,13 @@ export function orderStatusEmail(params: {
   status: string
   totalAmount?: number | null
   ordersUrl?: string | null
+  message?: string | null
 }) {
   const { customerName, orderId, status, totalAmount, ordersUrl } = params
   const orderRef = shortOrderId(orderId)
   const label = STATUS_LABELS[status] || status
-  const message = STATUS_MESSAGES[status] || `El estado de tu pedido cambió a: ${label}.`
+  const message =
+    params.message || STATUS_MESSAGES[status] || `El estado de tu pedido cambió a: ${label}.`
 
   const body = `
     <p style="margin:0 0 16px;">Hola ${escapeHtml(customerName)},</p>

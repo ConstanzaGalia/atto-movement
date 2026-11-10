@@ -3,6 +3,7 @@ import { CheckoutForm } from "@/components/checkout-form"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { AttoTelemetryBar } from "@/components/atto/atto-telemetry-bar"
+import { CHECKOUT_LABEL } from "@/lib/brand"
 
 export default async function CheckoutPage() {
   const cookieStore = await cookies()
@@ -26,7 +27,7 @@ export default async function CheckoutPage() {
   return (
     <div className="min-h-screen">
       <AttoTelemetryBar
-        left="CHECKOUT SEGURO // ENCRYPTED SESSION"
+        left={`${CHECKOUT_LABEL} // SESIÓN SEGURA`}
         right={
           <>
             <span className="hidden sm:inline">ATTO LABS PAY</span>
@@ -38,13 +39,13 @@ export default async function CheckoutPage() {
         <div className="max-w-7xl mx-auto">
           <div className="mb-8 border-b border-black pb-6">
             <p className="font-technical-data text-atto-secondary uppercase mb-2">
-              REGISTRO DE SALIDA // CHECKOUT
+              PAGO Y DESPACHO // {CHECKOUT_LABEL}
             </p>
             <h1 className="font-headline-lg uppercase tracking-tighter text-black">
               Pago y despacho seguro
             </h1>
           </div>
-          <CheckoutForm cartItems={cartItems} sessionId={sessionId} />
+          <CheckoutForm cartItems={cartItems} />
         </div>
       </div>
     </div>

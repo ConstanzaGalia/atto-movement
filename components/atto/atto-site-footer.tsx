@@ -6,6 +6,7 @@ import { AttoLogo } from "@/components/atto/atto-logo"
 import {
   FOOTER_BLURB,
   FOOTER_COORDS,
+  KIT_LABEL,
   SITE_NAME_FULL,
   WHATSAPP_URL,
 } from "@/lib/brand"
@@ -31,7 +32,7 @@ export function AttoSiteFooter() {
               {[
                 { href: "/", label: "Inicio" },
                 { href: "/tienda", label: "Colección" },
-                { href: "/carrito", label: "Bolsa de despacho" },
+                { href: "/carrito", label: KIT_LABEL },
                 { href: "/sobre-mi", label: "Sobre Atto" },
               ].map((link) => (
                 <li key={link.href + link.label}>
@@ -83,7 +84,7 @@ export function AttoSiteFooter() {
           <div>
             <h4 className="font-technical-micro text-atto-secondary mb-4">DESPACHO RÁPIDO</h4>
             <p className="font-technical-micro text-atto-secondary mb-4 leading-relaxed">
-              Envíos a todo el país // 24–48h en zonas prioritarias
+              Despacho a todo el país // 24–48h en zonas prioritarias
             </p>
             <form
               className="flex border border-surface-container-high"

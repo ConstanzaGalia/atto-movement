@@ -1,13 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/auth/admin"
 
 export async function POST(request: Request) {
-  const supabaseAuth = await createClient()
-  const {
-    data: { user },
-  } = await supabaseAuth.auth.getUser()
-  if (!user?.user_metadata?.is_admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const auth = await requireAdmin()
+  if (!auth.user) {
+    return auth.response ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const { creditAccountId, amount, notes } = await request.json()
@@ -34,7 +32,7 @@ export async function POST(request: Request) {
     type: "payment",
     amount: value,
     notes: notes || "Pago a cuenta",
-    created_by: user.id,
+    created_by: auth.user.id,
   })
 
   await supabase
@@ -61,6 +59,7 @@ export async function POST(request: Request) {
         .update({
           payment_status: "paid",
           paid_at: new Date().toISOString(),
+          stock_held_until: null,
           payment_notes: notes || "Cobrado vía cuenta corriente",
           updated_at: new Date().toISOString(),
         })

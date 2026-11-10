@@ -6,6 +6,7 @@ import Image from "next/image"
 import { ShoppingCart } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { usePromotions } from "@/contexts/promotions-context"
+import { ADDING_TO_KIT, ADD_TO_KIT } from "@/lib/brand"
 
 type VariantSize = {
   id: string
@@ -209,7 +210,7 @@ export function ProductCard({ product, variantSizes = [], variantIds = [] }: Pro
             className="w-full py-2.5 bg-black text-white hover:bg-surface-container-highest hover:text-black transition-colors font-label-caps flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ShoppingCart className="h-3.5 w-3.5" />
-            <span>{isAdding ? "AGREGANDO..." : "AGREGAR A BOLSA"}</span>
+            <span>{isAdding ? ADDING_TO_KIT : ADD_TO_KIT}</span>
           </button>
         </div>
       </div>

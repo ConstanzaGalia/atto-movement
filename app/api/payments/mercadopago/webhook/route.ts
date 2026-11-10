@@ -37,6 +37,7 @@ export async function POST(request: Request) {
           paid_at: new Date().toISOString(),
           mercadopago_payment_id: String(payment.id),
           payment_method: "mercadopago",
+          stock_held_until: null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", orderId)

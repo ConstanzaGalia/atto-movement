@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { ShoppingCart } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { ADDING_TO_KIT, ADD_TO_KIT } from "@/lib/brand"
 
 type Product = {
   id: string
@@ -57,7 +58,7 @@ export function AddToCartButton({ product }: { product: Product }) {
   return (
     <Button onClick={addToCart} disabled={isAdding || product.stock === 0} size="lg" className="w-full md:w-auto">
       <ShoppingCart className="mr-2 h-5 w-5" />
-      {isAdding ? "Agregando..." : "Agregar al Carrito"}
+      {isAdding ? ADDING_TO_KIT : ADD_TO_KIT}
     </Button>
   )
 }

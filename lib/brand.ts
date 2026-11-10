@@ -26,6 +26,36 @@ export const DEFAULT_SHIPPING_BASE_COST = 5000
 export const RELEASE_META = "RELEASE // SS 24/25"
 export const LOC_META = "LOC: SAN JAVIER / YERBA BUENA"
 
+/** Altitud de prueba fija de marca (San Javier / Yerba Buena) */
+export const TEST_ALTITUDE = "432M"
+export const TEST_ELEVATION_GAIN = "D+ 850"
+
+/** Copy de tienda — voz de corredor / trail */
+export const KIT_LABEL = "Kit de corredor"
+export const KIT_LABEL_SHORT = "KIT"
+export const KIT_EMPTY_TITLE = "Tu kit está vacío"
+export const KIT_EMPTY_SUBTITLE = "No hay gear en el registro de salida"
+export const KIT_TELEMETRY = "KIT TERMINAL"
+export const ADD_TO_KIT = "SUMAR AL KIT"
+export const ADDING_TO_KIT = "SUMANDO..."
+export const CONFIRM_EXIT = "FINALIZAR COMPRA"
+export const CONFIRM_EXIT_CTA = "CONTINUAR AL PAGO"
+export const CHECKOUT_LABEL = "CONFIRMAR PEDIDO"
+export const CONTINUE_ON_TRAIL = "SEGUIR EN EL SENDERO"
+export const EXIT_BRIEFING = "RESUMEN DEL PEDIDO"
+export const FEATURED_GEAR = "Gear de salida"
+export const FEATURED_GEAR_EMPTY = "No hay gear de salida en este momento."
+export const SHIPPING_LABEL = "Despacho"
+export const FREE_SHIPPING_REACHED = "¡TENÉS DESPACHO GRATIS A CUMBRE ASEGURADO!"
+export const freeShippingRemaining = (amountFormatted: string) =>
+  `FALTAN $ ${amountFormatted} PARA DESPACHO GRATIS A CUMBRE`
+export const STOCK_IN_BASE = "UNIDADES EN BASE"
+export const STOCK_OUT_OF_BASE = "SIN UNIDADES EN BASE"
+export const CART_EMPTY_ERROR = "El kit está vacío"
+export const CART_ITEM_UNAVAILABLE_ERROR = "Un producto del kit ya no está disponible"
+export const CART_QTY_INVALID_ERROR = "Cantidad inválida en el kit"
+export const ADD_TO_KIT_ERROR = "No se pudo sumar al kit"
+
 export const NAV_LINKS = [
   { href: "/tienda", label: "COLECCIÓN" },
   { href: "/tienda", label: "CATEGORÍAS" },

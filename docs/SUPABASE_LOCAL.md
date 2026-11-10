@@ -41,4 +41,4 @@ El seed crea un operador para desarrollo:
 - Contraseña: `attoadmin`
 - Login: `/auth/admin-login`
 
-Si la base se resetea (`supabase db reset`), esa cuenta se vuelve a crear. También podés dar de alta otro operador en `/auth/admin-register`.
+Si la base se resetea (`supabase db reset`), esa cuenta se vuelve a crear. El alta pública de operadores está cerrada: un admin nuevo se crea en Authentication y después con un `INSERT` en `admin_users`.

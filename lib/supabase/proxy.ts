@@ -35,11 +35,18 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith("/admin") && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/auth/admin-login"
-    return NextResponse.redirect(url)
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/auth/admin-login"
+      return NextResponse.redirect(url)
+    }
+    const { data: adminRow } = await supabase.from("admin_users").select("id").eq("id", user.id).maybeSingle()
+    if (!adminRow) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/"
+      return NextResponse.redirect(url)
+    }
   }
 
   // Protect customer account routes
@@ -52,9 +59,12 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse
   } catch (error) {
-    // Si hay un error, simplemente continuar sin autenticación
-    // Esto evita que el middleware bloquee requests válidas
     console.error("Error en middleware:", error)
+    if (request.nextUrl.pathname.startsWith("/admin")) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/auth/admin-login"
+      return NextResponse.redirect(url)
+    }
     return NextResponse.next({
       request,
     })

@@ -177,7 +177,7 @@ export default function PerfilPage() {
 
           <div>
             <label htmlFor="shipping_address" className={attoAuthLabelClass}>
-              Dirección de envío
+              Dirección de despacho
             </label>
             <Textarea
               id="shipping_address"

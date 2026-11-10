@@ -8,7 +8,7 @@ import { ArrowRight, MessageCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { PaymentWhatsAppNotice } from "@/components/payment-whatsapp-notice"
 import { usePromotions } from "@/contexts/promotions-context"
-import { WHATSAPP_URL } from "@/lib/brand"
+import { EXIT_BRIEFING, SHIPPING_LABEL, WHATSAPP_URL } from "@/lib/brand"
 import { computeShippingCost } from "@/lib/site-settings"
 
 type CartItem = {
@@ -48,18 +48,11 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.Re
 const inputClass =
   "w-full bg-surface-container-low border-0 px-3 py-3 font-technical-data text-black placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-black uppercase"
 
-export function CheckoutForm({
-  cartItems,
-  sessionId,
-}: {
-  cartItems: CartItem[]
-  sessionId: string
-}) {
+export function CheckoutForm({ cartItems }: { cartItems: CartItem[] }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [profile, setProfile] = useState<CustomerProfile | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<"transfer" | "mercadopago" | "account_credit">("transfer")
   const [giftCardCode, setGiftCardCode] = useState("")
   const [giftPreview, setGiftPreview] = useState<number | null>(null)
@@ -101,8 +94,12 @@ export function CheckoutForm({
           data: { user },
         } = await supabase.auth.getUser()
 
-        if (user && !user.user_metadata?.is_admin) {
-          setUserId(user.id)
+        if (user) {
+          const { data: adminRow } = await supabase.from("admin_users").select("id").eq("id", user.id).maybeSingle()
+          if (adminRow) {
+            setIsLoadingProfile(false)
+            return
+          }
           const response = await fetch("/api/customers/profile")
           if (response.ok) {
             const data = await response.json()
@@ -153,22 +150,9 @@ export function CheckoutForm({
       customerPhone: formData.get("phone"),
       shippingAddress: formData.get("address"),
       notes: formData.get("notes"),
-      sessionId,
-      userId: userId || null,
       paymentMethod,
       useAccountCredit: paymentMethod === "account_credit",
       giftCardCode: giftCardCode.trim() || null,
-      items: cartItems.map((item) => ({
-        productId: item.products.id,
-        productName: item.products.name,
-        productPrice: item.products.price,
-        quantity: item.quantity,
-        variantId: item.variant_id || null,
-        variantColor: item.product_variants?.color || null,
-        variantSizeId: item.variant_size_id || null,
-        variantSize: item.product_variant_sizes?.size || null,
-      })),
-      totalAmount: subtotal,
     }
 
     try {
@@ -200,11 +184,11 @@ export function CheckoutForm({
           return
         }
         setError(mpData.error || "No se pudo iniciar MercadoPago. El pedido quedó creado.")
-        router.push(`/pedido-confirmado?orderId=${data.orderId}`)
+        router.push(`/pedido-confirmado?orderId=${data.orderId}&t=${data.viewToken}`)
         return
       }
 
-      router.push(`/pedido-confirmado?orderId=${data.orderId}`)
+      router.push(`/pedido-confirmado?orderId=${data.orderId}&t=${data.viewToken}`)
     } catch (err) {
       setError("Error al procesar el pedido")
       console.error("[checkout] error:", err)
@@ -329,7 +313,7 @@ export function CheckoutForm({
       <aside className="lg:col-span-5">
         <div className="bg-surface-container-lowest border border-surface-container-high p-6 sticky top-28 space-y-5">
           <h2 className="font-headline-sm uppercase font-bold tracking-tight border-b border-surface-container-high pb-4">
-            RESUMEN DE ORDEN
+            {EXIT_BRIEFING}
           </h2>
           <div className="space-y-3 max-h-60 overflow-y-auto">
             {cartItems.map((item) => {
@@ -359,7 +343,7 @@ export function CheckoutForm({
               <span className="font-bold">$ {subtotal.toLocaleString("es-AR")} ARS</span>
             </div>
             <div className="flex justify-between font-technical-data uppercase">
-              <span className="text-atto-secondary">Envío</span>
+              <span className="text-atto-secondary">{SHIPPING_LABEL}</span>
               <span className="font-bold">
                 {shippingCost === 0 ? "Gratis" : `$ ${shippingCost.toLocaleString("es-AR")}`}
               </span>

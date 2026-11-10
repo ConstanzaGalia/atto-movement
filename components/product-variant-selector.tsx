@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ShoppingCart } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { ADDING_TO_KIT, ADD_TO_KIT, ADD_TO_KIT_ERROR } from "@/lib/brand"
 
 type Variant = {
   id: string
@@ -102,7 +103,7 @@ export function ProductVariantSelector({
         router.refresh()
       } else {
         const data = await response.json()
-        alert(data.error || "No se pudo agregar al carrito")
+        alert(data.error || ADD_TO_KIT_ERROR)
       }
     } catch (error) {
       console.error("Error adding to cart:", error)
@@ -160,7 +161,7 @@ export function ProductVariantSelector({
             <span className="font-label-caps text-black">TALLE // FIT</span>
             {selectedSize && (
               <span className="font-technical-micro text-atto-secondary">
-                STOCK: {selectedSize.stock}
+                EN BASE: {selectedSize.stock}
               </span>
             )}
           </div>
@@ -191,7 +192,7 @@ export function ProductVariantSelector({
         className="w-full py-3.5 bg-black text-white font-label-caps flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <ShoppingCart className="h-4 w-4" />
-        {isAdding ? "AGREGANDO..." : "AÑADIR AL PEDIDO"}
+        {isAdding ? ADDING_TO_KIT : ADD_TO_KIT}
       </button>
     </div>
   )

@@ -12,54 +12,6 @@ type ActionResult = {
   email?: string
 }
 
-export async function registerAdmin(formData: FormData): Promise<ActionResult> {
-  try {
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-    const fullName = formData.get("fullName") as string
-
-    // Validación básica
-    if (!email || !password || !fullName) {
-      return { error: "Todos los campos son requeridos" }
-    }
-
-    if (password.length < 6) {
-      return { error: "La contraseña debe tener al menos 6 caracteres" }
-    }
-
-    const supabase = await createClient()
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/admin`,
-        data: {
-          is_admin: true,
-          full_name: fullName,
-        },
-      },
-    })
-
-    if (error) {
-      return { error: error.message || "Error al registrar usuario" }
-    }
-
-    // Verificar si el registro fue exitoso
-    if (data?.user) {
-      revalidatePath("/auth/admin-register-success")
-      return { success: true, redirectTo: "/auth/admin-register-success" }
-    }
-
-    return { error: "Error inesperado al registrar" }
-  } catch (error) {
-    console.error("Error en registerAdmin:", error)
-    return {
-      error: error instanceof Error ? error.message : "Error al registrar administrador",
-    }
-  }
-}
-
 export async function loginAdmin(formData: FormData): Promise<ActionResult> {
   const email = String(formData.get("email") || "")
     .trim()
@@ -86,9 +38,13 @@ export async function loginAdmin(formData: FormData): Promise<ActionResult> {
       return { error: error.message }
     }
 
-    // Verificar si el usuario es administrador
-    if (!data.user?.user_metadata?.is_admin) {
-      // Si no es admin, cerrar sesión inmediatamente
+    const { data: adminRow } = await supabase
+      .from("admin_users")
+      .select("id")
+      .eq("id", data.user.id)
+      .maybeSingle()
+
+    if (!adminRow) {
       await supabase.auth.signOut()
       return { error: "No tienes permisos de administrador" }
     }
@@ -310,7 +266,8 @@ export async function requestPasswordReset(formData: FormData): Promise<ActionRe
   }
 
   const { data: userData } = await admin.auth.admin.getUserById(customer.id)
-  if (!userData.user || userData.user.user_metadata?.is_admin) {
+  const { data: adminRow } = await admin.from("admin_users").select("id").eq("id", customer.id).maybeSingle()
+  if (!userData.user || adminRow) {
     return genericSuccess
   }
 
@@ -413,8 +370,12 @@ export async function loginCustomer(formData: FormData): Promise<ActionResult> {
       return { error: error.message }
     }
 
-    // Verificar que NO sea admin (clientes no pueden ser admins)
-    if (data.user?.user_metadata?.is_admin) {
+    const { data: adminRow } = await supabase
+      .from("admin_users")
+      .select("id")
+      .eq("id", data.user.id)
+      .maybeSingle()
+    if (adminRow) {
       await supabase.auth.signOut()
       return { error: "Por favor usa el login de administrador" }
     }

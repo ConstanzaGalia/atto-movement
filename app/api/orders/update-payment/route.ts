@@ -1,15 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/auth/admin"
+import { getSiteSettings } from "@/lib/site-settings"
 
 export async function POST(request: Request) {
-  const supabaseAuth = await createClient()
-  const {
-    data: { user },
-  } = await supabaseAuth.auth.getUser()
-
-  if (!user?.user_metadata?.is_admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const { response } = await requireAdmin()
+  if (response) return response
 
   const { orderId, paymentStatus, paymentNotes, paymentMethod } = await request.json()
   if (!orderId || !paymentStatus) {
@@ -22,6 +18,12 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient({ role: "service_role" })
+  const { data: existing } = await supabase
+    .from("orders")
+    .select("status, stock_restored_at")
+    .eq("id", orderId)
+    .maybeSingle()
+
   const patch: Record<string, unknown> = {
     payment_status: paymentStatus,
     updated_at: new Date().toISOString(),
@@ -29,13 +31,20 @@ export async function POST(request: Request) {
   if (paymentNotes !== undefined) patch.payment_notes = paymentNotes
   if (paymentMethod) patch.payment_method = paymentMethod
   if (paymentStatus === "paid") patch.paid_at = new Date().toISOString()
-  if (paymentStatus === "refunded" || paymentStatus === "awaiting_transfer" || paymentStatus === "unpaid") {
-    if (paymentStatus !== "paid") {
-      /* keep paid_at if refunded for history; clear only if unpaid */
-    }
-  }
   if (paymentStatus === "unpaid" || paymentStatus === "awaiting_transfer") {
     patch.paid_at = null
+  }
+  if (paymentStatus === "paid" || paymentStatus === "on_account" || paymentStatus === "refunded") {
+    patch.stock_held_until = null
+  }
+  if (
+    (paymentStatus === "unpaid" || paymentStatus === "awaiting_transfer") &&
+    existing &&
+    !existing.stock_restored_at &&
+    existing.status !== "cancelled"
+  ) {
+    const settings = await getSiteSettings(supabase)
+    patch.stock_held_until = new Date(Date.now() + settings.unpaid_hold_hours * 60 * 60 * 1000).toISOString()
   }
 
   const { error } = await supabase.from("orders").update(patch).eq("id", orderId)
