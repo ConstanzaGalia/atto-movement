@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition, useState, useEffect } from "react"
+import { useTransition, useState, useEffect, useCallback } from "react"
 import { ProductsManager } from "@/components/admin/products-manager"
 import { CategoriesManager } from "@/components/admin/categories-manager"
 import { OrdersManager } from "@/components/admin/orders-manager"
@@ -14,7 +14,7 @@ import { GiftCardsManager } from "@/components/admin/gift-cards-manager"
 import { ReportsPanel } from "@/components/admin/reports-panel"
 import { AttoEyebrow } from "@/components/atto/atto-eyebrow"
 import { logoutAdmin } from "@/app/auth/actions"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -44,15 +44,39 @@ const NAV: NavItem[] = [
   { id: "settings", label: "Config" },
 ]
 
+const NAV_IDS = new Set(NAV.map((item) => item.id))
+const DEFAULT_TAB = "stats"
+
+function resolveTab(tab: string | null | undefined) {
+  return tab && NAV_IDS.has(tab) ? tab : DEFAULT_TAB
+}
+
 export function AdminDashboard({ user }: { user: User }) {
   const [isPending, startTransition] = useTransition()
   const [mounted, setMounted] = useState(false)
-  const [active, setActive] = useState("stats")
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const active = resolveTab(searchParams.get("tab"))
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const setActive = useCallback(
+    (id: string) => {
+      const next = resolveTab(id)
+      const params = new URLSearchParams(searchParams.toString())
+      if (next === DEFAULT_TAB) {
+        params.delete("tab")
+      } else {
+        params.set("tab", next)
+      }
+      const query = params.toString()
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams]
+  )
 
   const handleLogout = () => {
     startTransition(async () => {
@@ -98,7 +122,7 @@ export function AdminDashboard({ user }: { user: User }) {
           </div>
         </div>
         <nav className="border-t border-outline-variant overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
-          <div className="mx-auto max-w-7xl px-2 flex gap-0 w-max min-w-full">
+          <div className="mx-auto max-w-7xl px-4 flex items-stretch">
             {NAV.map((item) => (
               <button
                 key={item.id}

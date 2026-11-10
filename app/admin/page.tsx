@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AdminDashboard } from "@/components/admin-dashboard"
@@ -16,5 +17,15 @@ export default async function AdminPage() {
     redirect("/")
   }
 
-  return <AdminDashboard user={data.user} />
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-surface px-4 py-8 font-technical-data text-atto-secondary uppercase">
+          Cargando panel…
+        </div>
+      }
+    >
+      <AdminDashboard user={data.user} />
+    </Suspense>
+  )
 }
