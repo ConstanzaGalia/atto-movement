@@ -257,6 +257,7 @@ export function ExpensesManager() {
       {isLoading ? (
         <p className="font-technical-data text-atto-secondary uppercase">Cargando…</p>
       ) : (
+        <>
         <div className="md:hidden space-y-3">
           {filteredExpenses.map((expense) => (
             <div key={expense.id} className="border border-outline-variant bg-white p-4 space-y-2">
@@ -344,6 +345,7 @@ export function ExpensesManager() {
             ))}
           </tbody>
         </AdminDataTable>
+        </>
       )}
       {!isLoading && filteredExpenses.length === 0 && (
         <p className="font-technical-data text-atto-secondary uppercase">Sin gastos en el período</p>
