@@ -14,6 +14,7 @@ import {
   AdminTd,
   AdminStatusBadge,
 } from "@/components/admin/ui"
+import { AdminCreateOrderDialog } from "@/components/admin/admin-create-order-dialog"
 
 type Order = {
   id: string
@@ -73,6 +74,7 @@ export function OrdersManager() {
   const [internalNotes, setInternalNotes] = useState("")
   const [carrier, setCarrier] = useState("")
   const [tracking, setTracking] = useState("")
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   const supabase = createClient()
 
@@ -189,18 +191,33 @@ export function OrdersManager() {
         eyebrow="OPS // ORDERS"
         title="Pedidos"
         description="Logística y cobranza. Marcá transferencias y cargá tracking."
+        action={
+          <button
+            type="button"
+            onClick={() => setIsCreateOpen(true)}
+            className="border border-black bg-black px-3 py-2 font-label-caps text-white hover:bg-transparent hover:text-black"
+          >
+            + Pedido
+          </button>
+        }
       />
 
-      <div className="flex flex-col md:flex-row gap-3">
+      <AdminCreateOrderDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onCreated={fetchOrders}
+      />
+
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
         <Input
           placeholder="Buscar nombre, email, tel…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && fetchOrders()}
-          className="rounded-none md:max-w-xs font-technical-data"
+          className="rounded-none w-full sm:max-w-xs font-technical-data"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="rounded-none md:w-44 font-technical-data">
+          <SelectTrigger className="rounded-none w-full sm:w-44 font-technical-data">
             <SelectValue placeholder="Logística" />
           </SelectTrigger>
           <SelectContent>
@@ -212,7 +229,7 @@ export function OrdersManager() {
           </SelectContent>
         </Select>
         <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-          <SelectTrigger className="rounded-none md:w-44 font-technical-data">
+          <SelectTrigger className="rounded-none w-full sm:w-44 font-technical-data">
             <SelectValue placeholder="Cobro" />
           </SelectTrigger>
           <SelectContent>
@@ -227,7 +244,7 @@ export function OrdersManager() {
         <button
           type="button"
           onClick={fetchOrders}
-          className="border border-black px-4 py-2 font-label-caps hover:bg-black hover:text-white transition-colors"
+          className="border border-black px-4 py-2 font-label-caps hover:bg-black hover:text-white transition-colors w-full sm:w-auto"
         >
           Filtrar
         </button>
@@ -236,38 +253,36 @@ export function OrdersManager() {
       {isLoading ? (
         <p className="font-technical-data text-atto-secondary uppercase">Cargando…</p>
       ) : (
-        <AdminDataTable>
-          <AdminTableHead>
-            <AdminTh>Fecha</AdminTh>
-            <AdminTh>Cliente</AdminTh>
-            <AdminTh>Total</AdminTh>
-            <AdminTh>Cobro</AdminTh>
-            <AdminTh>Logística</AdminTh>
-            <AdminTh></AdminTh>
-          </AdminTableHead>
-          <tbody>
+        <>
+          <div className="md:hidden space-y-3">
             {orders.map((order) => (
-              <tr key={order.id} className="hover:bg-surface-container-low/80">
-                <AdminTd>{new Date(order.created_at).toLocaleDateString("es-AR")}</AdminTd>
-                <AdminTd>
-                  <div className="normal-case">
-                    <p className="font-bold uppercase">{order.customer_name}</p>
-                    <p className="text-atto-secondary">{order.customer_email}</p>
+              <div key={order.id} className="border border-outline-variant bg-white p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-display font-bold uppercase tracking-tight truncate">
+                      {order.customer_name}
+                    </p>
+                    <p className="font-technical-micro text-atto-secondary normal-case truncate">
+                      {order.customer_email}
+                    </p>
+                    <p className="font-technical-micro text-outline mt-1">
+                      {new Date(order.created_at).toLocaleDateString("es-AR")}
+                    </p>
                   </div>
-                </AdminTd>
-                <AdminTd>$ {Number(order.total_amount).toLocaleString("es-AR")}</AdminTd>
-                <AdminTd>
+                  <p className="font-technical-data font-bold shrink-0">
+                    $ {Number(order.total_amount).toLocaleString("es-AR")}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
                   <AdminStatusBadge
                     status={order.payment_status || "awaiting_transfer"}
                     label={PAYMENT_LABELS[order.payment_status || "awaiting_transfer"]}
                   />
-                </AdminTd>
-                <AdminTd>
                   <Select
                     value={order.status}
                     onValueChange={(v) => handleStatusChange(order.id, v, order.status)}
                   >
-                    <SelectTrigger className="rounded-none h-8 w-36 font-technical-micro">
+                    <SelectTrigger className="rounded-none h-8 w-full max-w-[11rem] font-technical-micro">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -277,24 +292,78 @@ export function OrdersManager() {
                       <SelectItem value="cancelled">Cancelado</SelectItem>
                     </SelectContent>
                   </Select>
-                </AdminTd>
-                <AdminTd>
-                  <button
-                    type="button"
-                    onClick={() => handleViewOrder(order)}
-                    className="font-technical-micro uppercase border-b border-black"
-                  >
-                    Ver
-                  </button>
-                </AdminTd>
-              </tr>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleViewOrder(order)}
+                  className="font-technical-micro uppercase border-b border-black"
+                >
+                  Ver pedido
+                </button>
+              </div>
             ))}
-          </tbody>
-        </AdminDataTable>
+          </div>
+
+          <AdminDataTable desktopOnly>
+            <AdminTableHead>
+              <AdminTh>Fecha</AdminTh>
+              <AdminTh>Cliente</AdminTh>
+              <AdminTh>Total</AdminTh>
+              <AdminTh>Cobro</AdminTh>
+              <AdminTh>Logística</AdminTh>
+              <AdminTh></AdminTh>
+            </AdminTableHead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id} className="hover:bg-surface-container-low/80">
+                  <AdminTd>{new Date(order.created_at).toLocaleDateString("es-AR")}</AdminTd>
+                  <AdminTd>
+                    <div className="normal-case">
+                      <p className="font-bold uppercase">{order.customer_name}</p>
+                      <p className="text-atto-secondary">{order.customer_email}</p>
+                    </div>
+                  </AdminTd>
+                  <AdminTd>$ {Number(order.total_amount).toLocaleString("es-AR")}</AdminTd>
+                  <AdminTd>
+                    <AdminStatusBadge
+                      status={order.payment_status || "awaiting_transfer"}
+                      label={PAYMENT_LABELS[order.payment_status || "awaiting_transfer"]}
+                    />
+                  </AdminTd>
+                  <AdminTd>
+                    <Select
+                      value={order.status}
+                      onValueChange={(v) => handleStatusChange(order.id, v, order.status)}
+                    >
+                      <SelectTrigger className="rounded-none h-8 w-36 font-technical-micro">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pendiente</SelectItem>
+                        <SelectItem value="preparing">Preparando</SelectItem>
+                        <SelectItem value="delivered">Entregado</SelectItem>
+                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </AdminTd>
+                  <AdminTd>
+                    <button
+                      type="button"
+                      onClick={() => handleViewOrder(order)}
+                      className="font-technical-micro uppercase border-b border-black"
+                    >
+                      Ver
+                    </button>
+                  </AdminTd>
+                </tr>
+              ))}
+            </tbody>
+          </AdminDataTable>
+        </>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-none">
+        <DialogContent className="rounded-none max-w-[calc(100%-2rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display uppercase">
               Pedido {selectedOrder ? selectedOrder.id.slice(0, 8) : ""}
@@ -302,7 +371,7 @@ export function OrdersManager() {
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-5 font-technical-data">
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <p>
                   <span className="text-atto-secondary">Cliente</span>
                   <br />

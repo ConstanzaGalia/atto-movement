@@ -83,17 +83,45 @@ export function GiftCardsManager() {
         }
       />
 
-      <div className="border border-outline-variant bg-white p-4 grid md:grid-cols-4 gap-3">
+      <div className="border border-outline-variant bg-white p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Código" className="rounded-none font-technical-data uppercase" />
         <Input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Monto" className="rounded-none" />
         <Input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} className="rounded-none" />
         <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notas" className="rounded-none" />
-        <button type="button" onClick={issue} className="md:col-span-4 bg-black text-white px-4 py-3 font-label-caps">
+        <button type="button" onClick={issue} className="sm:col-span-2 md:col-span-4 bg-black text-white px-4 py-3 font-label-caps">
           Emitir gift card
         </button>
       </div>
 
-      <AdminDataTable>
+      <div className="md:hidden space-y-3">
+        {cards.map((c) => (
+          <div key={c.id} className="border border-outline-variant bg-white p-4 space-y-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-display font-bold uppercase tracking-tight">{c.code}</p>
+                <p className="font-technical-data mt-1">
+                  $ {Number(c.balance).toLocaleString("es-AR")} / {Number(c.initial_amount).toLocaleString("es-AR")}
+                </p>
+                <p className="font-technical-micro text-outline mt-1">
+                  Vence {c.expires_at ? new Date(c.expires_at).toLocaleDateString("es-AR") : "—"}
+                </p>
+              </div>
+              <AdminStatusBadge status={c.status} />
+            </div>
+            {c.status === "active" ? (
+              <button type="button" onClick={() => setStatus(c.id, "inactive")} className="font-technical-micro uppercase border-b border-black">
+                Anular
+              </button>
+            ) : c.status === "inactive" ? (
+              <button type="button" onClick={() => setStatus(c.id, "active")} className="font-technical-micro uppercase border-b border-black">
+                Reactivar
+              </button>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      <AdminDataTable desktopOnly>
         <AdminTableHead>
           <AdminTh>Código</AdminTh>
           <AdminTh>Saldo</AdminTh>

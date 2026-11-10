@@ -88,16 +88,16 @@ export function SalesStats() {
         description="Ventas netas = cobrado (paid), sin cancelados."
       />
 
-      <div className="flex flex-wrap gap-3 items-end">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-end">
+        <div className="w-full sm:w-auto">
           <label className="font-technical-micro text-outline uppercase block mb-1">Desde</label>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-none" />
+          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-none w-full" />
         </div>
-        <div>
+        <div className="w-full sm:w-auto">
           <label className="font-technical-micro text-outline uppercase block mb-1">Hasta</label>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-none" />
+          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-none w-full" />
         </div>
-        <button type="button" onClick={fetchStats} className="bg-black text-white px-4 py-2 font-label-caps">
+        <button type="button" onClick={fetchStats} className="bg-black text-white px-4 py-2 font-label-caps w-full sm:w-auto">
           Actualizar
         </button>
       </div>
@@ -117,7 +117,28 @@ export function SalesStats() {
 
           <div>
             <p className="font-technical-micro text-outline uppercase mb-2">Últimos pedidos</p>
-            <AdminDataTable>
+            <div className="md:hidden space-y-3">
+              {recentOrders.map((o) => (
+                <div key={o.id} className="border border-outline-variant bg-white p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold uppercase truncate">{o.customer_name}</p>
+                      <p className="font-technical-micro text-atto-secondary">
+                        {new Date(o.created_at).toLocaleDateString("es-AR")}
+                      </p>
+                    </div>
+                    <p className="font-technical-data font-bold shrink-0">
+                      $ {Number(o.total_amount).toLocaleString("es-AR")}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <AdminStatusBadge status={o.payment_status || "awaiting_transfer"} />
+                    <AdminStatusBadge status={o.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <AdminDataTable desktopOnly>
               <AdminTableHead>
                 <AdminTh>Cliente</AdminTh>
                 <AdminTh>Total</AdminTh>

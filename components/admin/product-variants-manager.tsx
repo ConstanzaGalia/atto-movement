@@ -216,7 +216,7 @@ export function ProductVariantsManager({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Palette className="h-4 w-4" />
           Variantes de Color

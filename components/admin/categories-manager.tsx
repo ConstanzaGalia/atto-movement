@@ -93,7 +93,7 @@ export function CategoriesManager() {
                 + Nueva
               </button>
             </DialogTrigger>
-            <DialogContent className="rounded-none">
+            <DialogContent className="rounded-none max-w-[calc(100%-2rem)] sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle className="font-display uppercase">
                   {editingCategory ? "Editar categoría" : "Nueva categoría"}
@@ -123,7 +123,7 @@ export function CategoriesManager() {
         }
       />
 
-      <AdminDataTable>
+      <AdminDataTable compact>
         <AdminTableHead>
           <AdminTh>Nombre</AdminTh>
           <AdminTh>Slug</AdminTh>

@@ -204,7 +204,7 @@ export function PromotionsManager() {
                 + Promo
               </button>
             </DialogTrigger>
-          <DialogContent className="rounded-none max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="rounded-none max-w-[calc(100%-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display uppercase">
                 {editingPromo ? "Editar promoción" : "Nueva promoción"}
@@ -228,7 +228,7 @@ export function PromotionsManager() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <Label>Tipo de descuento</Label>
                   <Select value={discountType} onValueChange={(v) => setDiscountType(v as "percentage" | "fixed")}>
@@ -317,7 +317,45 @@ export function PromotionsManager() {
         }
       />
 
-      <AdminDataTable>
+      <div className="md:hidden space-y-3">
+        {promotions.map((p) => (
+          <div key={p.id} className="border border-outline-variant bg-white p-4 space-y-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-display font-bold uppercase tracking-tight">{p.name}</p>
+                <p className="font-technical-micro text-atto-secondary mt-1">
+                  {p.type === "site_wide" ? "Site-wide" : "Productos"} · {formatDiscount(p)}
+                </p>
+                <p className="font-technical-micro text-outline normal-case mt-1">
+                  {formatDate(p.starts_at)} → {formatDate(p.ends_at)}
+                </p>
+              </div>
+              <AdminStatusBadge status={p.is_active ? "active" : "inactive"} label={p.is_active ? "Activa" : "Off"} />
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                className="font-technical-micro uppercase border-b border-black"
+                onClick={() => {
+                  setEditingPromo(p)
+                  setIsDialogOpen(true)
+                }}
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                className="font-technical-micro uppercase text-atto-secondary border-b border-outline"
+                onClick={() => handleDelete(p.id)}
+              >
+                Borrar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <AdminDataTable desktopOnly>
         <AdminTableHead>
           <AdminTh>Nombre</AdminTh>
           <AdminTh>Tipo</AdminTh>

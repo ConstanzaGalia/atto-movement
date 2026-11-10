@@ -1,0 +1,105 @@
+categoria,sku,nombre,precio,color,talle,stock
+Shorts,12961S26,"Short filo",44900,CHOCOLATE,L,1
+Shorts,12961S26,"Short filo",44900,CHOCOLATE,XL,1
+Shorts,12962S26,"Short abra",42000,GRIS OSCURO,XL,1
+Shorts,12962S26,"Short abra",42000,TURQUESA,M,1
+Shorts,13024S26,"Short travesía",44000,CHOCOLATE,S,2
+Shorts,13024S26,"Short travesía",44000,CHOCOLATE,M,1
+Shorts,13024S26,"Short travesía",44000,BEIGE,S,1
+Shorts,13024S26,"Short travesía",44000,VERDE FLUO,M,2
+Shorts,13024S26,"Short travesía",44000,VERDE FLUO,S,1
+Shorts,BOLSI,"Bolsi",54900,ROJO,XL,1
+Shorts,CINTO-2,"Cinto 2",58700,GRIS,M,1
+Shorts,DRY,"Dry",45500,GRIS CLARO,L,1
+Shorts,DRY,"Dry",45500,BLANCO,L,1
+Shorts,DRY,"Dry",45500,NEGRO,L,1
+Shorts,FIRU,"Firu",51900,MORADO,XL,1
+Shorts,FLUO,"Fluo",42000,NARANJA,L,1
+Shorts,MARATON,"Maraton",41000,NEGRO,XL,1
+Shorts,MARATON,"Maraton",41000,VERDE PETROLEO,M,1
+Shorts,PLISA,"Plisa",43000,NARANJA,L,1
+Remeras,4051S26,"Remera aconquija",32000,NEGRA,M,1
+Remeras,4051S26,"Remera aconquija",32000,NEGRA,L,1
+Remeras,4051S26,"Remera aconquija",32000,NEGRA,XL,1
+Remeras,4051S26,"Remera aconquija",32000,BLANCA,M,1
+Remeras,4051S26,"Remera aconquija",32000,BLANCA,L,1
+Remeras,4051S26,"Remera aconquija",32000,VERDE,M,1
+Remeras,4051S26,"Remera aconquija",32000,VERDE,L,1
+Remeras,4051S26,"Remera aconquija",32000,VERDE,XL,1
+Remeras,4052S26,"Remera ñuñorco",28000,CELESTE,M,1
+Remeras,4052S26,"Remera ñuñorco",28000,CELESTE,L,1
+Remeras,4055S26,"Remera muñoz",32000,BLANCO,M,1
+Remeras,4055S26,"Remera muñoz",32000,BLANCO,L,1
+Remeras,4055S26,"Remera muñoz",32000,BLANCO,XL,1
+Remeras,4055S26,"Remera muñoz",32000,NEGRO,L,1
+Remeras,4055S26,"Remera muñoz",32000,NEGRO,XL,1
+Remeras,4056S26,"Remera pelao",30000,NEGRO,M,1
+Remeras,4056S26,"Remera pelao",30000,BLANCO,L,1
+Remeras,4056S26,"Remera pelao",30000,BLANCO,XL,1
+Remeras,4057S26,"Remera negrito",32000,MANCHAS,S,1
+Remeras,4062S26,"Remera tafí",28000,ROJA,S,1
+Remeras,4062S26,"Remera tafí",28000,ROJA,M,1
+Remeras,4062S26,"Remera tafí",28000,CELESTE,S,1
+Remeras,4062S26,"Remera tafí",28000,CELESTE,M,1
+Remeras,4062S26,"Remera tafí",28000,BLANCA,S,1
+Remeras,4062S26,"Remera tafí",28000,BLANCA,M,1
+Remeras,4066S26,"Remera el bolsón",34000,NEGRA,S,1
+Remeras,4066S26,"Remera el bolsón",34000,NEGRA,L,1
+Remeras,4066S26,"Remera el bolsón",34000,BLANCA,XL,1
+Remeras,8360S26,"Remera infiernillo",44000,BLANCA,L,1
+Remeras,8369S26,"Remera mala mala",36500,NEGRA,M,1
+Remeras,8369S26,"Remera mala mala",36500,BLANCA,M,1
+Remeras,8371S26,"Remera la ciénaga",34000,CELESTE,M,1
+Remeras,8371S26,"Remera la ciénaga",34000,CHOCOLATE,M,1
+Remeras,8371S26,"Remera la ciénaga",34000,CHOCOLATE,L,1
+Remeras,8383S26,"Remera raco",39900,VIOLETA,L,1
+Remeras,8383S26,"Remera raco",39900,VIOLETA,XL,1
+Remeras,8386S26,"Remera san javier",41900,AZUL OSCURO,L,1
+Remeras,8387S26,"Remera anfama",38000,NEGRA,L,1
+Remeras,8387S26,"Remera anfama",38000,NEGRA,XL,1
+Remeras,8405S26,"Remera siambón",41000,BLANCA,S,1
+Remeras,8405S26,"Remera siambón",41000,BLANCA,L,1
+Remeras,8406S26,"Remera potrerillo",34500,BLANCA,XL,1
+Remeras,8407S26,"Remera ampimpa",36900,CHOCOLATE,M,1
+Remeras,8407S26,"Remera ampimpa",36900,CHOCOLATE,L,1
+Remeras,8408S26,"Remera amaicha",36900,GRIS,L,1
+Remeras,8408S26,"Remera amaicha",36900,GRIS,XL,1
+Remeras,8408S26,"Remera amaicha",36900,BLANCA,L,1
+Remeras,8408S26,"Remera amaicha",36900,BLANCA,XL,1
+Remeras,8415S26,"Remera lara",29000,ROSA PALIDO,M,1
+Remeras,8418S26,"Remera yerba buena",39900,MAGENTA,M,1
+Remeras,8421S26,"Remera villa nougués",31900,NEGRA,M,1
+Remeras,8421S26,"Remera villa nougués",31900,GRIS,L,1
+Remeras,8421S26,"Remera villa nougués",31900,GRIS,XL,1
+Remeras,8427S26,"Remera apacheta",39900,BYN,M,1
+Remeras,8428S26,"Remera abra",39900,VERDE ESTAMPADA,S,1
+Remeras,8428S26,"Remera abra",39900,VERDE ESTAMPADA,L,1
+Remeras,8432S26,"Remera refugio",35900,BLANCA,M,1
+Remeras,8432S26,"Remera refugio",35900,NEGRA,XL,1
+Remeras,8438S26,"Remera filo",34500,GRIS,M,1
+Remeras,8438S26,"Remera filo",34500,GRIS,L,1
+Remeras,8466S26,"Remera travesía",34900,MAGENTA,XL,1
+Remeras,8466S26,"Remera travesía",34900,MAGENTA,L,1
+Remeras,8468S26,"Remera cumbre",41000,ROSA,M,1
+Remeras,8468S26,"Remera cumbre",41000,ROSA,L,1
+Remeras,8468S26,"Remera cumbre",41000,BLANCA,S,1
+Remeras,8468S26,"Remera cumbre",41000,BLANCA,M,1
+Remeras,8468S26,"Remera cumbre",41000,BLANCA,L,1
+Remeras,8468S26,"Remera cumbre",41000,NEGRA,M,1
+Remeras,8468S26,"Remera cumbre",41000,NEGRA,L,1
+Remeras,8544S26,"Remera altura",28000,COLORADA,L,1
+Remeras,8555526,"Remera quebrada",44900,GRIS,L,1
+Remeras,8564S26,"Remera sendero",34600,AMARILLO,L,1
+Remeras,8564S26,"Remera sendero",34600,ROJO,L,2
+Remeras,8588S26,"Remera vertiente",24500,NEGRA,S,1
+Remeras,8588S26,"Remera vertiente",24500,NEGRA,M,1
+Remeras,CALA,"Cala",39800,BLANCO,L,1
+Remeras,CALA,"Cala",39800,TURQUESA,M,1
+Remeras,GREY,"Grey",38500,GRIS,XL,1
+Remeras,GREY,"Grey",38500,AZUL PETROLEO,M,1
+Remeras,MOISSE,"Moisse",43000,BEIGE,L,1
+Remeras,MOISSE,"Moisse",43000,GRIS CLARO,XL,1
+Remeras,POLY,"Poly",44500,VERDE OSCURO,L,1
+Remeras,POLY,"Poly",44500,AZUL,M,1
+Remeras,SIZE,"Size",42400,MOSTAZA,XXL,1
+Remeras,SOLID,"Solid",41000,GRIS CLARO,XL,1

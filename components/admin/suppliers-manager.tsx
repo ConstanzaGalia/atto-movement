@@ -90,7 +90,7 @@ export function SuppliersManager() {
                 + Nuevo
               </button>
             </DialogTrigger>
-            <DialogContent className="rounded-none max-w-lg">
+            <DialogContent className="rounded-none max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-display uppercase">
                   {editingSupplier ? "Editar proveedor" : "Nuevo proveedor"}
@@ -123,7 +123,7 @@ export function SuppliersManager() {
         }
       />
 
-      <AdminDataTable>
+      <AdminDataTable compact>
         <AdminTableHead>
           <AdminTh>Proveedor</AdminTh>
           <AdminTh>Contacto</AdminTh>

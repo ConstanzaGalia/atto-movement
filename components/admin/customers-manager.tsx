@@ -4,6 +4,14 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   AdminPageHeader,
   AdminDataTable,
@@ -62,6 +70,15 @@ export function CustomersManager() {
   const [creditEnabled, setCreditEnabled] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState("")
   const [paymentNotes, setPaymentNotes] = useState("")
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [newName, setNewName] = useState("")
+  const [newEmail, setNewEmail] = useState("")
+  const [newPhone, setNewPhone] = useState("")
+  const [newAddress, setNewAddress] = useState("")
+  const [newNotes, setNewNotes] = useState("")
+  const [newEnableCredit, setNewEnableCredit] = useState(false)
+  const [newCreditLimit, setNewCreditLimit] = useState("0")
 
   const loadCustomers = async () => {
     const { data } = await supabase
@@ -183,33 +200,144 @@ export function CustomersManager() {
     .filter((o) => o.payment_status === "paid")
     .reduce((s, o) => s + Number(o.total_amount), 0)
 
+  const createCustomer = async () => {
+    if (!newName.trim() || !newEmail.trim()) {
+      alert("Nombre y email son requeridos")
+      return
+    }
+    setCreating(true)
+    try {
+      const res = await fetch("/api/admin/customers/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: newName.trim(),
+          email: newEmail.trim(),
+          phone: newPhone.trim() || null,
+          shippingAddress: newAddress.trim() || null,
+          notes: newNotes.trim() || null,
+          enableCredit: newEnableCredit,
+          creditLimit: Number(newCreditLimit) || 0,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || "Error al crear cliente")
+        return
+      }
+      setIsCreateOpen(false)
+      setNewName("")
+      setNewEmail("")
+      setNewPhone("")
+      setNewAddress("")
+      setNewNotes("")
+      setNewEnableCredit(false)
+      setNewCreditLimit("0")
+      await loadCustomers()
+      if (data.customer) await openCustomer(data.customer as CustomerAccount)
+    } finally {
+      setCreating(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow="CRM // CLIENTES"
         title="Clientes"
         description="Fichas, historial de pedidos y cuenta corriente."
+        action={
+          <button
+            type="button"
+            onClick={() => setIsCreateOpen(true)}
+            className="border border-black bg-black px-3 py-2 font-label-caps text-white hover:bg-transparent hover:text-black"
+          >
+            + Cliente
+          </button>
+        }
       />
 
-      <div className="flex gap-2">
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="rounded-none max-w-[calc(100%-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display uppercase">Nuevo cliente</DialogTitle>
+            <DialogDescription>Alta offline. No crea cuenta web automática.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="mb-1 block">Nombre *</Label>
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} className="rounded-none" />
+            </div>
+            <div>
+              <Label className="mb-1 block">Email *</Label>
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="rounded-none normal-case"
+              />
+            </div>
+            <div>
+              <Label className="mb-1 block">Teléfono</Label>
+              <Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="rounded-none" />
+            </div>
+            <div>
+              <Label className="mb-1 block">Dirección</Label>
+              <Textarea value={newAddress} onChange={(e) => setNewAddress(e.target.value)} className="rounded-none" rows={2} />
+            </div>
+            <div>
+              <Label className="mb-1 block">Notas</Label>
+              <Textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="rounded-none" rows={2} />
+            </div>
+            <label className="flex items-center gap-2 font-technical-data">
+              <input
+                type="checkbox"
+                checked={newEnableCredit}
+                onChange={(e) => setNewEnableCredit(e.target.checked)}
+              />
+              Habilitar cuenta corriente
+            </label>
+            {newEnableCredit && (
+              <div>
+                <Label className="mb-1 block">Límite CC</Label>
+                <Input
+                  value={newCreditLimit}
+                  onChange={(e) => setNewCreditLimit(e.target.value)}
+                  className="rounded-none"
+                />
+              </div>
+            )}
+            <button
+              type="button"
+              disabled={creating}
+              onClick={createCustomer}
+              className="w-full bg-black text-white px-3 py-2 font-label-caps disabled:opacity-50"
+            >
+              {creating ? "Guardando…" : "Crear cliente"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           placeholder="Buscar…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && loadCustomers()}
-          className="rounded-none max-w-sm font-technical-data"
+          className="rounded-none w-full sm:max-w-sm font-technical-data"
         />
         <button
           type="button"
           onClick={loadCustomers}
-          className="border border-black px-4 py-2 font-label-caps hover:bg-black hover:text-white"
+          className="border border-black px-4 py-2 font-label-caps hover:bg-black hover:text-white w-full sm:w-auto"
         >
           Buscar
         </button>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <AdminDataTable>
+        <AdminDataTable compact>
           <AdminTableHead>
             <AdminTh>Cliente</AdminTh>
             <AdminTh>Contacto</AdminTh>

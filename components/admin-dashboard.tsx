@@ -97,15 +97,15 @@ export function AdminDashboard({ user }: { user: User }) {
             </button>
           </div>
         </div>
-        <nav className="border-t border-outline-variant overflow-x-auto">
-          <div className="mx-auto max-w-7xl px-2 flex gap-0 min-w-max">
+        <nav className="border-t border-outline-variant overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+          <div className="mx-auto max-w-7xl px-2 flex gap-0 w-max min-w-full">
             {NAV.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setActive(item.id)}
                 className={cn(
-                  "px-3 py-3 font-technical-micro uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap",
+                  "px-3 py-3 font-technical-micro uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap shrink-0",
                   active === item.id
                     ? "border-black text-black"
                     : "border-transparent text-atto-secondary hover:text-black"

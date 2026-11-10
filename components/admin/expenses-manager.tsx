@@ -168,7 +168,7 @@ export function ExpensesManager() {
                 + Gasto
               </button>
             </DialogTrigger>
-            <DialogContent className="rounded-none max-w-lg">
+            <DialogContent className="rounded-none max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-display uppercase">
                   {editingExpense ? "Editar gasto" : "Nuevo gasto"}
@@ -179,7 +179,7 @@ export function ExpensesManager() {
                   <label className="font-technical-micro text-outline uppercase block mb-1">Descripción</label>
                   <Input name="description" required defaultValue={editingExpense?.description} className="rounded-none" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="font-technical-micro text-outline uppercase block mb-1">Monto</label>
                     <Input name="amount" type="number" step="0.01" required defaultValue={editingExpense?.amount} className="rounded-none" />
@@ -213,9 +213,9 @@ export function ExpensesManager() {
         }
       />
 
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="rounded-none w-32 font-technical-data">
+          <SelectTrigger className="rounded-none w-full sm:w-32 font-technical-data">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -227,7 +227,7 @@ export function ExpensesManager() {
           </SelectContent>
         </Select>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="rounded-none w-40 font-technical-data">
+          <SelectTrigger className="rounded-none w-full sm:w-40 font-technical-data">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -257,7 +257,50 @@ export function ExpensesManager() {
       {isLoading ? (
         <p className="font-technical-data text-atto-secondary uppercase">Cargando…</p>
       ) : (
-        <AdminDataTable>
+        <div className="md:hidden space-y-3">
+          {filteredExpenses.map((expense) => (
+            <div key={expense.id} className="border border-outline-variant bg-white p-4 space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-display font-bold uppercase tracking-tight">{expense.description}</p>
+                  <p className="font-technical-micro text-outline mt-1">
+                    {new Date(expense.expense_date).toLocaleDateString("es-AR")}
+                  </p>
+                  {expense.notes && (
+                    <p className="font-technical-micro text-atto-secondary normal-case mt-1">{expense.notes}</p>
+                  )}
+                </div>
+                <p className="font-technical-data font-bold shrink-0">
+                  - $ {Number(expense.amount).toLocaleString("es-AR")}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  className="font-technical-micro uppercase border-b border-black"
+                  onClick={() => {
+                    setEditingExpense(expense)
+                    setIsDialogOpen(true)
+                  }}
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  className="font-technical-micro uppercase text-atto-secondary border-b border-outline"
+                  onClick={() => {
+                    setExpenseToDelete(expense)
+                    setIsDeleteDialogOpen(true)
+                  }}
+                >
+                  Borrar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <AdminDataTable desktopOnly>
           <AdminTableHead>
             <AdminTh>Fecha</AdminTh>
             <AdminTh>Descripción</AdminTh>

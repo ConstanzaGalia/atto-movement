@@ -139,16 +139,16 @@ export function ReportsPanel() {
         }
       />
 
-      <div className="flex flex-wrap gap-3 items-end">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-end">
+        <div className="w-full sm:w-auto">
           <label className="font-technical-micro text-outline uppercase block mb-1">Desde</label>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-none" />
+          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-none w-full" />
         </div>
-        <div>
+        <div className="w-full sm:w-auto">
           <label className="font-technical-micro text-outline uppercase block mb-1">Hasta</label>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-none" />
+          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-none w-full" />
         </div>
-        <button type="button" onClick={load} className="bg-black text-white px-4 py-2 font-label-caps">
+        <button type="button" onClick={load} className="bg-black text-white px-4 py-2 font-label-caps w-full sm:w-auto">
           Actualizar
         </button>
       </div>
@@ -165,7 +165,7 @@ export function ReportsPanel() {
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <p className="font-technical-micro text-outline uppercase mb-2">Por método de pago</p>
-          <AdminDataTable>
+          <AdminDataTable compact>
             <AdminTableHead>
               <AdminTh>Método</AdminTh>
               <AdminTh>Total</AdminTh>
@@ -182,7 +182,7 @@ export function ReportsPanel() {
         </div>
         <div>
           <p className="font-technical-micro text-outline uppercase mb-2">Top productos</p>
-          <AdminDataTable>
+          <AdminDataTable compact>
             <AdminTableHead>
               <AdminTh>Producto</AdminTh>
               <AdminTh>Qty</AdminTh>
@@ -191,7 +191,7 @@ export function ReportsPanel() {
             <tbody>
               {topProducts.map((p) => (
                 <tr key={p.name}>
-                  <AdminTd className="normal-case max-w-[180px] truncate">{p.name}</AdminTd>
+                  <AdminTd className="normal-case max-w-[140px] sm:max-w-[180px] truncate">{p.name}</AdminTd>
                   <AdminTd>{p.qty}</AdminTd>
                   <AdminTd>$ {p.total.toLocaleString("es-AR")}</AdminTd>
                 </tr>

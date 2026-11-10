@@ -29,6 +29,7 @@ import { AdminPageHeader } from "@/components/admin/ui"
 type Product = {
   id: string
   name: string
+  sku: string | null
   description: string | null
   price: number
   stock: number
@@ -90,6 +91,9 @@ export function ProductsManager() {
   const [extraImages, setExtraImages] = useState<ProductImage[]>([])
   const [isAddingExtraImages, setIsAddingExtraImages] = useState(false)
   const [totalStockByProductId, setTotalStockByProductId] = useState<Record<string, number>>({})
+  const [stockByColorByProductId, setStockByColorByProductId] = useState<
+    Record<string, { color: string; stock: number }[]>
+  >({})
   const [incompleteSetupByProductId, setIncompleteSetupByProductId] = useState<Record<string, string>>({})
 
   const supabase = createClient()
@@ -99,7 +103,11 @@ export function ProductsManager() {
 
     const q = searchQuery.trim().toLowerCase()
     if (q) {
-      list = list.filter((p) => p.name.toLowerCase().includes(q))
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.sku || "").toLowerCase().includes(q)
+      )
     }
 
     if (filterCategoryId !== "all") {
@@ -180,13 +188,14 @@ export function ProductsManager() {
       const productIds = data.map((p) => p.id)
       if (productIds.length === 0) {
         setTotalStockByProductId({})
+        setStockByColorByProductId({})
         setIncompleteSetupByProductId({})
         setIsLoading(false)
         return
       }
       const { data: variants } = await supabase
         .from("product_variants")
-        .select("id, product_id, stock")
+        .select("id, product_id, stock, color")
         .in("product_id", productIds)
       const variantIds = variants?.map((v) => v.id) ?? []
       const { data: variantSizes } =
@@ -198,10 +207,16 @@ export function ProductsManager() {
           : { data: null }
       const variantToProduct: Record<string, string> = {}
       const variantsByProduct: Record<string, string[]> = {}
+      const colorStockByProduct: Record<string, { color: string; stock: number }[]> = {}
       variants?.forEach((v) => {
         variantToProduct[v.id] = v.product_id
         if (!variantsByProduct[v.product_id]) variantsByProduct[v.product_id] = []
         variantsByProduct[v.product_id].push(v.id)
+        if (!colorStockByProduct[v.product_id]) colorStockByProduct[v.product_id] = []
+        colorStockByProduct[v.product_id].push({
+          color: v.color || "—",
+          stock: Number(v.stock) || 0,
+        })
       })
 
       const sizesByProduct: Record<string, { variant_id: string; stock?: number }[]> = {}
@@ -217,21 +232,28 @@ export function ProductsManager() {
 
       const totalByProduct: Record<string, number> = {}
       const incompleteByProduct: Record<string, string> = {}
+      const sortedColorStock: Record<string, { color: string; stock: number }[]> = {}
       data.forEach((p) => {
-        const variantIds = variantsByProduct[p.id] ?? []
+        const variantIdsForProduct = variantsByProduct[p.id] ?? []
         const sizes = sizesByProduct[p.id] ?? []
-        const incompleteMessage = getIncompleteSetupMessage(variantIds, sizes)
+        const incompleteMessage = getIncompleteSetupMessage(variantIdsForProduct, sizes)
         if (incompleteMessage) {
           incompleteByProduct[p.id] = incompleteMessage
           totalByProduct[p.id] = 0
-        } else if (isProductSetupComplete(variantIds, sizes)) {
+          sortedColorStock[p.id] = []
+        } else if (isProductSetupComplete(variantIdsForProduct, sizes)) {
           totalByProduct[p.id] = sizes.reduce((sum, s) => sum + (s.stock ?? 0), 0)
+          sortedColorStock[p.id] = (colorStockByProduct[p.id] || []).sort((a, b) =>
+            a.color.localeCompare(b.color, "es")
+          )
         } else {
           totalByProduct[p.id] = 0
+          sortedColorStock[p.id] = []
         }
       })
       setIncompleteSetupByProductId(incompleteByProduct)
       setTotalStockByProductId(totalByProduct)
+      setStockByColorByProductId(sortedColorStock)
     }
     setIsLoading(false)
   }
@@ -381,8 +403,10 @@ export function ProductsManager() {
       }
 
       const formData = new FormData(form)
+      const skuRaw = String(formData.get("sku") || "").trim()
       const productData: Record<string, unknown> = {
         name: formData.get("name") as string,
+        sku: skuRaw ? skuRaw.toUpperCase() : null,
         description: formData.get("description") as string,
         price: Number.parseFloat(formData.get("price") as string),
         category_id: selectedCategoryId || null,
@@ -490,7 +514,7 @@ export function ProductsManager() {
                 + Producto
               </button>
             </DialogTrigger>
-          <DialogContent className="rounded-none max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="rounded-none max-w-[calc(100%-2rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display uppercase">
                 {editingProduct ? "Editar producto" : "Nuevo producto"}
@@ -501,6 +525,16 @@ export function ProductsManager() {
               <div>
                 <Label htmlFor="name" className="mb-2 block">Nombre *</Label>
                 <Input id="name" name="name" required defaultValue={editingProduct?.name} />
+              </div>
+              <div>
+                <Label htmlFor="sku" className="mb-2 block">SKU (solo admin)</Label>
+                <Input
+                  id="sku"
+                  name="sku"
+                  placeholder="Ej. 4051S26"
+                  defaultValue={editingProduct?.sku || ""}
+                  className="uppercase"
+                />
               </div>
               <div>
                 <Label htmlFor="description" className="mb-2 block">Descripción</Label>
@@ -540,7 +574,7 @@ export function ProductsManager() {
                   </p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                   <Label htmlFor="category_id" className="mb-2 block">Categoría</Label>
                   <Select value={selectedCategoryId || undefined} onValueChange={(value) => setSelectedCategoryId(value || "")}>
@@ -697,16 +731,16 @@ export function ProductsManager() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-atto-secondary" />
             <Input
-              placeholder="Buscar en colección…"
+              placeholder="Buscar por nombre o SKU…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 rounded-none font-technical-data"
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             <Select value={filterCategoryId} onValueChange={setFilterCategoryId}>
-              <SelectTrigger className="rounded-none w-[160px] font-technical-data">
+              <SelectTrigger className="rounded-none w-full font-technical-data">
                 <SelectValue placeholder="Categoría" />
               </SelectTrigger>
               <SelectContent>
@@ -720,7 +754,7 @@ export function ProductsManager() {
             </Select>
 
             <Select value={stockFilter} onValueChange={(v) => setStockFilter(v as StockFilter)}>
-              <SelectTrigger className="rounded-none w-[160px] font-technical-data">
+              <SelectTrigger className="rounded-none w-full font-technical-data">
                 <SelectValue placeholder="Stock" />
               </SelectTrigger>
               <SelectContent>
@@ -732,7 +766,7 @@ export function ProductsManager() {
             </Select>
 
             <Select value={featuredFilter} onValueChange={(v) => setFeaturedFilter(v as FeaturedFilter)}>
-              <SelectTrigger className="rounded-none w-[150px] font-technical-data">
+              <SelectTrigger className="rounded-none w-full font-technical-data">
                 <SelectValue placeholder="Destacados" />
               </SelectTrigger>
               <SelectContent>
@@ -743,7 +777,7 @@ export function ProductsManager() {
             </Select>
 
             <Select value={filterSupplierId} onValueChange={setFilterSupplierId}>
-              <SelectTrigger className="rounded-none w-[160px] font-technical-data">
+              <SelectTrigger className="rounded-none w-full font-technical-data">
                 <SelectValue placeholder="Proveedor" />
               </SelectTrigger>
               <SelectContent>
@@ -757,7 +791,7 @@ export function ProductsManager() {
             </Select>
 
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-              <SelectTrigger className="rounded-none w-[150px] font-technical-data">
+              <SelectTrigger className="rounded-none w-full font-technical-data">
                 <SelectValue placeholder="Orden" />
               </SelectTrigger>
               <SelectContent>
@@ -784,25 +818,37 @@ export function ProductsManager() {
         <>
           <div className="border border-outline-variant divide-y divide-outline-variant bg-white">
             {paginatedProducts.map((product) => (
-              <div key={product.id} className="flex gap-4 p-4 hover:bg-surface-container-low/60">
+              <div key={product.id} className="flex flex-col gap-3 p-4 hover:bg-surface-container-low/60 sm:flex-row sm:gap-4">
+                <div className="flex gap-3 min-w-0 flex-1">
                 <div className="w-16 h-20 relative bg-surface-container-low overflow-hidden flex-shrink-0 border border-outline-variant">
                   <Image src={product.image_url || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display font-bold uppercase tracking-tight">{product.name}</h3>
-                  <p className="font-technical-micro text-atto-secondary uppercase mt-1">
+                  <p className="font-technical-micro text-black mt-1 tracking-wider">
+                    {product.sku ? `SKU · ${product.sku}` : "SIN SKU"}
+                  </p>
+                  <p className="font-technical-micro text-atto-secondary uppercase mt-0.5">
                     {product.categories?.name || "Sin cat."}
                     {product.suppliers?.name ? ` // ${product.suppliers.name}` : ""}
                   </p>
                   <p className="font-technical-data mt-1">
-                    $ {product.price.toLocaleString("es-AR")} · Stock {totalStockByProductId[product.id] ?? 0}
+                    $ {product.price.toLocaleString("es-AR")} · Total {totalStockByProductId[product.id] ?? 0}
                     {product.featured ? " · Destacado" : ""}
                   </p>
+                  {(stockByColorByProductId[product.id] || []).length > 0 && (
+                    <p className="font-technical-micro text-atto-secondary mt-1 uppercase tracking-wide break-words">
+                      {(stockByColorByProductId[product.id] || [])
+                        .map((c) => `${c.color} ${c.stock}`)
+                        .join(" · ")}
+                    </p>
+                  )}
                   {incompleteSetupByProductId[product.id] && (
                     <p className="font-technical-micro text-atto-secondary mt-1">{incompleteSetupByProductId[product.id]}</p>
                   )}
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 items-end sm:items-center">
+                </div>
+                <div className="flex flex-row flex-wrap gap-3 items-center sm:flex-col sm:items-end lg:flex-row lg:items-center">
                   <button
                     type="button"
                     onClick={() => toggleFeatured(product.id, product.featured)}
@@ -874,7 +920,7 @@ export function ProductsManager() {
         setIsVariantsDialogOpen(open)
         if (!open) setSelectedProductForVariants(null)
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="rounded-none max-w-[calc(100%-2rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Gestionar Colores y Talles</DialogTitle>
             <DialogDescription>

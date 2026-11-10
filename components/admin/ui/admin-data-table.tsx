@@ -3,12 +3,34 @@ import { cn } from "@/lib/utils"
 type AdminDataTableProps = {
   children: React.ReactNode
   className?: string
+  /** Sin ancho mínimo forzado — útil para tablas de pocas columnas en mobile */
+  compact?: boolean
+  /** Oculta la tabla en mobile (usar junto a un listado en cards) */
+  desktopOnly?: boolean
 }
 
-export function AdminDataTable({ children, className }: AdminDataTableProps) {
+export function AdminDataTable({
+  children,
+  className,
+  compact = false,
+  desktopOnly = false,
+}: AdminDataTableProps) {
   return (
-    <div className={cn("border border-outline-variant bg-white overflow-x-auto", className)}>
-      <table className="w-full text-left border-collapse min-w-[640px]">{children}</table>
+    <div
+      className={cn(
+        "border border-outline-variant bg-white overflow-x-auto",
+        desktopOnly && "hidden md:block",
+        className
+      )}
+    >
+      <table
+        className={cn(
+          "w-full text-left border-collapse",
+          compact ? "min-w-0" : "min-w-[560px]"
+        )}
+      >
+        {children}
+      </table>
     </div>
   )
 }
