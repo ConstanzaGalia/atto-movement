@@ -211,7 +211,9 @@ export async function POST(request: Request) {
   })
 
   if (placeError || !placed) {
-    const mapped = mapPlaceOrderError(`${placeError?.message || ""} ${String(placeError?.details || "")}`)
+    const rawMessage = `${placeError?.message || ""} ${String(placeError?.details || "")}`.trim()
+    console.error("[orders/create] place_order failed:", rawMessage || placeError)
+    const mapped = mapPlaceOrderError(rawMessage)
     return NextResponse.json(mapped.body, { status: mapped.status })
   }
 
