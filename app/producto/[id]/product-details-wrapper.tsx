@@ -71,7 +71,6 @@ export function ProductDetailsWrapper({
     ? promotions.getDiscountedPrice(product.id, product.price)
     : { finalPrice: product.price, label: null }
   const hasDiscount = finalPrice < product.price
-  const cuota = Math.round(finalPrice / 3)
 
   return (
     <>
@@ -158,11 +157,6 @@ export function ProductDetailsWrapper({
               </span>
             )}
             <span className="font-technical-micro text-atto-secondary">IVA INCLUIDO</span>
-          </div>
-          <div className="bg-surface-container-low p-2.5 flex items-center gap-2 mb-4">
-            <span className="font-technical-micro font-medium uppercase">
-              3 CUOTAS SIN INTERÉS DE $ {cuota.toLocaleString("es-AR")} ARS
-            </span>
           </div>
 
           {product.description && (
